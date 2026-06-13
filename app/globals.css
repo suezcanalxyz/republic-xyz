@@ -1,0 +1,29 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+  --font-sans: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --bg:         #010206;
+  --surface:    #030810;
+  --border:     #0f2035;
+  --border-dim: #080f18;
+  --fg:         #c8d8e8;
+  --fg-mid:     #7a9ab4;
+  --fg-dim:     #3d5a70;
+  --accent:     #57E7FF;
+  --alert:      #FF5470;
+  --success:    #6FE3A5;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font-mono); overflow: hidden; }
+
+/* Cesium widget overrides */
+.cesium-viewer .cesium-viewer-bottom,
+.cesium-widget-credits { display: none !important; }
+.cesium-viewer-toolbar { display: none !important; }
+.cesium-container { user-select: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

@@ -1,0 +1,426 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Signal Hierarchy ──────────────────────────────────────────────────────
+
+enum SignalType {
+  SEED        // Major strategic event — opens a research case
+  MEDIUM      // Update linked to existing Seed
+  SHORT_ALERT // Early, fragile, provisional
+  DEEP_CASE   // Curated investigation dossier
+}
+
+enum VerificationStatus {
+  verified
+  corroborated
+  partly_verified
+  disputed
+  unverified
+  false_claim     // "false" is reserved
+  low_confidence
+  needs_review
+}
+
+enum SignalStatus {
+  auto_collected
+  needs_review
+  curated
+  published
+  archived
+}
+
+// ─── Core Signal ───────────────────────────────────────────────────────────
+
+model Signal {
+  id            String            @id @default(cuid())
+  externalId    String?           @unique   // e.g. "ukraine-donetsk-front" from seed
+  type          SignalType        @default(SHORT_ALERT)
+  category      String            // matches CATEGORIES key
+  tags          String[]
+  title         String
+  summary       String
+  whatHappened  String?
+  date          DateTime?
+  lastUpdated   DateTime          @default(now())
+  status        SignalStatus      @default(auto_collected)
+  verification  VerificationStatus @default(unverified)
+  score         Float?            // strategic relevance 0-100
+  visible       Boolean           @default(true)
+
+  // GeoJSON geometry stored as JSONB — PostGIS point also in locationGeom
+  locationJson  Json?             // { name, country, region, coordinates: [lng,lat], confidence }
+  locationGeom  Unsupported("geometry(Point,4326)")?
+
+  // Narrative fields
+  republicReading  String?
+  methodNote       String?
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  articles      Article[]
+  claims        Claim[]
+  evidenceItems EvidenceItem[]
+  perspectives  PerspectiveFrame[]
+  satellites    SatelliteObservation[]
+  socialTraces  SocialTrace[]
+  factChecks    FactCheck[]
+
+  // Graph edges (as source or target)
+  edgesFrom     GraphEdge[]       @relation("edgeSource")
+  edgesTo       GraphEdge[]       @relation("edgeTarget")
+
+  // Vessels and aircraft linked through edge graph
+  ingestionRun  IngestionRun?     @relation(fields: [ingestionRunId], references: [id])
+  ingestionRunId String?
+
+  @@index([category])
+  @@index([type])
+  @@index([status])
+  @@index([date])
+  @@index([score])
+}
+
+// ─── Articles & Sources ────────────────────────────────────────────────────
+
+model Article {
+  id              String    @id @default(cuid())
+  signalId        String
+  signal          Signal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  sourceId        String?
+  source          Source?   @relation(fields: [sourceId], references: [id])
+
+  url             String
+  title           String
+  excerpt         String?
+  language        String?   @default("en")
+  publishedAt     DateTime?
+  perspectiveGroup String?  // west | east | south | mena | local | other
+  reliability     String?   // high | medium | low | unknown
+  sourceType      String?   // institutional | government | media | ngo | social
+
+  createdAt       DateTime  @default(now())
+
+  @@index([signalId])
+  @@index([publishedAt])
+}
+
+model Source {
+  id          String    @id @default(cuid())
+  name        String
+  domain      String?   @unique
+  country     String?
+  region      String?
+  type        String?   // institutional | government | media | ngo | social | academic
+  reliability String?   // high | medium | low | unknown
+  notes       String?
+
+  articles    Article[]
+  createdAt   DateTime  @default(now())
+
+  @@index([domain])
+}
+
+// ─── Claims & Fact-Checking ────────────────────────────────────────────────
+
+model Claim {
+  id          String    @id @default(cuid())
+  signalId    String
+  signal      Signal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  text        String
+  claimType   String?   // allegation | casualty | denial | attribution | geolocation
+  status      String?   // verified | disputed | false | unverified
+  madeBy      String?   // actor name
+  madeAt      DateTime?
+  notes       String?
+
+  factChecks  FactCheck[]
+  contradictions Contradiction[] @relation("contradictionClaim")
+  contradictedBy Contradiction[] @relation("contradictionCounterClaim")
+
+  createdAt   DateTime  @default(now())
+}
+
+model FactCheck {
+  id          String    @id @default(cuid())
+  signalId    String?
+  signal      Signal?   @relation(fields: [signalId], references: [id])
+  claimId     String?
+  claim       Claim?    @relation(fields: [claimId], references: [id])
+
+  checker     String    // organization name
+  url         String?
+  rating      String    // true | mostly_true | partly_true | false | misleading | unverified
+  summary     String?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Contradiction {
+  id              String  @id @default(cuid())
+  claimId         String
+  claim           Claim   @relation("contradictionClaim", fields: [claimId], references: [id])
+  counterClaimId  String
+  counterClaim    Claim   @relation("contradictionCounterClaim", fields: [counterClaimId], references: [id])
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+// ─── Evidence Items ────────────────────────────────────────────────────────
+
+model EvidenceItem {
+  id              String    @id @default(cuid())
+  signalId        String
+  signal          Signal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  type            String    // document | image | video | satellite | ais | adsb | social | official
+  url             String?
+  archiveUrl      String?
+  title           String?
+  description     String?
+  language        String?
+  publishedAt     DateTime?
+  confidence      String?   // high | medium | low
+  verified        Boolean   @default(false)
+  sensitivityLabel String?  // public | sensitive | restricted
+
+  // Geolocation of evidence (if different from signal)
+  locationJson    Json?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([signalId])
+  @@index([type])
+}
+
+// ─── Perspective Frames ────────────────────────────────────────────────────
+
+model PerspectiveFrame {
+  id        String  @id @default(cuid())
+  signalId  String
+  signal    Signal  @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  region    String  // west | east | south | mena | local | other
+  frame     String
+  sources   String[]
+
+  @@index([signalId])
+}
+
+// ─── Satellite Observations ────────────────────────────────────────────────
+
+model SatelliteObservation {
+  id            String    @id @default(cuid())
+  signalId      String
+  signal        Signal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  source        String    // FIRMS | Sentinel | Copernicus | PlanetLabs | custom
+  observedAt    DateTime?
+  type          String?   // fire | infrastructure_damage | vessel | flood | explosion | deforestation
+  locationJson  Json?
+  imageUrl      String?
+  beforeUrl     String?   // before/after pairs
+  afterUrl      String?
+  confidence    String?
+  notes         String?
+
+  createdAt     DateTime  @default(now())
+}
+
+// ─── Social / Visual Evidence ──────────────────────────────────────────────
+
+model SocialTrace {
+  id              String    @id @default(cuid())
+  signalId        String
+  signal          Signal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+
+  platform        String    // twitter | telegram | tiktok | instagram | other
+  url             String?
+  archiveUrl      String?
+  author          String?
+  publishedAt     DateTime?
+  claimedLocation String?
+  geolocatedLat   Float?
+  geolocatedLng   Float?
+  geolocationNotes String?
+  reverseImageSearch String?
+  firstKnownUpload   DateTime?
+  verified        Boolean   @default(false)
+  sensitivityLabel String?
+
+  createdAt       DateTime  @default(now())
+}
+
+// ─── Locations & Infrastructure ────────────────────────────────────────────
+
+model Location {
+  id          String  @id @default(cuid())
+  name        String
+  country     String?
+  region      String?
+  type        String? // city | port | chokepoint | canal | border | camp | base
+  coordinates Json?   // [lng, lat]
+  geom        Unsupported("geometry(Point,4326)")?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  infrastructures Infrastructure[]
+}
+
+model Infrastructure {
+  id          String    @id @default(cuid())
+  name        String
+  type        String    // port | chokepoint | canal | cable | pipeline | data_center | border_fence | detention_center | satellite_station | route
+  locationId  String?
+  location    Location? @relation(fields: [locationId], references: [id])
+  description String?
+  geomJson    Json?     // LineString or Polygon for routes/areas
+  notes       String?
+  createdAt   DateTime  @default(now())
+}
+
+// ─── Actors ────────────────────────────────────────────────────────────────
+
+model Actor {
+  id          String  @id @default(cuid())
+  name        String
+  type        String  // state | ngo | armed_group | corporation | institution | person
+  country     String?
+  description String?
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+// ─── Vessels ───────────────────────────────────────────────────────────────
+
+model Vessel {
+  id            String    @id @default(cuid())
+  name          String?
+  imo           String?   @unique
+  mmsi          String?
+  flag          String?
+  type          String?   // tanker | container | bulk_carrier | warship | coast_guard | rescue | other
+  owner         String?
+  operator      String?
+  notes         String?
+
+  // Only populated when politically visible in a Signal context
+  eventReference  String?   // brief note on context, no live tracking
+  confidenceLabel String?   // "vessel identified" | "unverified vessel reference"
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Aircraft ──────────────────────────────────────────────────────────────
+
+model Aircraft {
+  id            String    @id @default(cuid())
+  icaoHex       String?   @unique
+  registration  String?
+  callsign      String?
+  type          String?   // military | surveillance | civilian | sar | other
+  country       String?
+  operator      String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+// ─── Evidence Graph Edges ──────────────────────────────────────────────────
+
+model GraphEdge {
+  id          String  @id @default(cuid())
+  sourceId    String
+  source      Signal  @relation("edgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId    String
+  target      Signal  @relation("edgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  // Edge type from spec
+  relation    String
+  // Examples: REPORTED_BY | CONTAINS_CLAIM | SUPPORTED_BY | CONTRADICTED_BY |
+  //           LOCATED_AT | INVOLVES_ACTOR | AFFECTS_INFRASTRUCTURE |
+  //           USES_TECHNOLOGY | OBSERVED_BY_SATELLITE | MENTIONS_VESSEL |
+  //           MENTIONS_AIRCRAFT | HAS_VISUAL_EVIDENCE | FRAMED_AS |
+  //           AMPLIFIED_BY | UPDATES | BELONGS_TO_CASE | APPEARS_IN_MAP |
+  //           ENTERED_REPUBLIC_AS | RELATED_TO
+
+  label       String?   // human-readable e.g. "caused by: attacks on shipping"
+  confidence  String?
+  createdAt   DateTime  @default(now())
+
+  @@index([sourceId])
+  @@index([targetId])
+  @@index([relation])
+}
+
+// ─── Map Views & Modules ───────────────────────────────────────────────────
+
+model MapView {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  mode        String  // event | evidence | dispute | infrastructure | maritime | aviation | satellite | technology | source_geo | seacommons | investigation
+  defaultLayers Json?
+  isPublic    Boolean @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Module {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  status      String  @default("planned") // planned | alpha | beta | live
+  createdAt   DateTime @default(now())
+}
+
+// ─── Ingestion ─────────────────────────────────────────────────────────────
+
+model IngestionRun {
+  id          String    @id @default(cuid())
+  source      String    // gdelt | rss | acled | firms | seed | manual
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  status      String    @default("running") // running | success | partial | failed
+  fetched     Int       @default(0)
+  kept        Int       @default(0)
+  dropped     Int       @default(0)
+  errors      String[]
+  notes       String?
+
+  signals     Signal[]
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  action      String    // created | updated | verified | published | archived
+  entityType  String    // signal | article | claim | evidence
+  entityId    String
+  userId      String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([entityType, entityId])
+}
+
+// ─── Community Submissions (future) ────────────────────────────────────────
+
+model CommunitySubmission {
+  id            String    @id @default(cuid())
+  type          String    // source_url | local_report | photo_video | geolocation | translation | correction | challenge | perspective | evidence
+  content       String?
+  url           String?
+  locationJson  Json?
+  submittedAt   DateTime  @default(now())
+  status        String    @default("pending") // pending | under_review | accepted | rejected
+  reviewNotes   String?
+  linkedSignalId String?
+}
