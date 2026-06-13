@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { transformEvents } from '@/lib/seed';
+import { loadSeedSignals } from '@/lib/seed';
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.toLowerCase().trim() ?? '';
@@ -11,9 +9,7 @@ export async function GET(req: NextRequest) {
 
   // TODO: Use db full-text search + pgvector similarity
   try {
-    const seedPath = path.resolve(process.cwd(), '../suezcanal.xyz/republic/atlas/data/events.json');
-    const raw = JSON.parse(readFileSync(seedPath, 'utf-8'));
-    const signals = transformEvents(raw.events || []);
+    const signals = loadSeedSignals();
 
     const results = signals
       .filter(s =>

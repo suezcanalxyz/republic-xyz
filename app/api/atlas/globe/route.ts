@@ -1,20 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { transformEvents } from '@/lib/seed';
+import { loadSeedSignals } from '@/lib/seed';
 import { Signal, GlobeQueryParams, ClusteredSignal } from '@/lib/types';
-
-// Load seed data — prefers DB in production, falls back to local events.json
-function loadSeedSignals(): Signal[] {
-  try {
-    const seedPath = path.resolve(process.cwd(), '../suezcanal.xyz/republic/atlas/data/events.json');
-    const raw = JSON.parse(readFileSync(seedPath, 'utf-8'));
-    return transformEvents(raw.events || []);
-  } catch {
-    // Fallback: empty; add bundled seed-data.json here if needed
-    return [];
-  }
-}
 
 function clusterize(signals: Signal[], zoom: number): ClusteredSignal[] {
   const cellDeg = 40 / Math.pow(2, Math.max(0, zoom));

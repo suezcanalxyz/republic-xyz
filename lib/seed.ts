@@ -1,3 +1,6 @@
+import { readFileSync } from 'fs';
+import path from 'path';
+import seedData from './seed-data.json';
 import { Signal, SignalType, VerificationStatus, SourceDiversity } from './types';
 
 // Transform raw events.json format into Signal format.
@@ -103,4 +106,14 @@ export function transformEvents(raw: Record<string, unknown>[]): Signal[] {
         visible: true,
       } as Signal;
     });
+}
+
+export function loadSeedSignals(): Signal[] {
+  try {
+    const seedPath = path.resolve(process.cwd(), '../suezcanal.xyz/republic/atlas/data/events.json');
+    const raw = JSON.parse(readFileSync(seedPath, 'utf-8')) as { events?: Record<string, unknown>[] };
+    return transformEvents(raw.events || []);
+  } catch {
+    return transformEvents((seedData as { events?: Record<string, unknown>[] }).events || []);
+  }
 }
