@@ -5,9 +5,9 @@ import type { ClusteredSignal } from '@/lib/types';
 import { CATEGORIES } from '@/lib/types';
 
 declare global {
-  interface Window {
-    Cesium: typeof import('cesium');
-  }
+  // Cesium loaded via CDN (no npm package) — typed as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface Window { Cesium: any; }
 }
 
 interface Props {
