@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadSeedSignals } from '@/lib/seed';
+import { fetchGdacsSignals } from '@/lib/sources/gdacs';
 import { Signal, GlobeQueryParams, ClusteredSignal } from '@/lib/types';
 
 function clusterize(signals: Signal[], zoom: number): ClusteredSignal[] {
@@ -69,9 +70,39 @@ export async function GET(req: NextRequest) {
     bbox: p.get('bbox') ?? undefined,
   };
 
-  // TODO: When DB is available, query db.signal.findMany() with filters
-  // For now: serve from seed JSON
-  let signals = loadSeedSignals();
+  // Merge seed + live GDACS data (GDACS cached 30min server-side)
+  const [seedSignals, liveSignals] = await Promise.all([
+    Promise.resolve(loadSeedSignals()),
+    fetchGdacsSignals(),
+  ]);
+  const seedIds = new Set(seedSignals.map(s => s.id));
+  let signals: Signal[] = [
+    ...seedSignals,
+    ...liveSignals.filter(s => !seedIds.has(s.id)),
+  ];
+
+  // Mode filter — each mode surfaces a different slice of the signal graph
+  if (params.mode && params.mode !== 'event') {
+    switch (params.mode) {
+      case 'evidence':
+        signals = signals.filter(s => s.verification === 'corroborated' || s.verification === 'verified');
+        break;
+      case 'dispute':
+        signals = signals.filter(s =>
+          s.verification === 'disputed' || s.verification === 'unverified' || s.verification === 'low_confidence'
+        );
+        break;
+      case 'investigation':
+        signals = signals.filter(s => s.type === 'SEED');
+        break;
+      case 'narrative':
+        signals = signals.filter(s => s.perspectives != null && Object.keys(s.perspectives).length > 0);
+        break;
+      case 'infrastructure':
+        signals = signals.filter(s => s.category === 'infrastructure_failure' || s.category === 'energy_extraction');
+        break;
+    }
+  }
 
   // Time filter
   if (params.timeWindow && params.timeWindow !== 'all') {
@@ -108,7 +139,7 @@ export async function GET(req: NextRequest) {
   }
 
   const zoom = params.zoom ?? 2;
-  const clustered = clusterize(signals, zoom);
+  const clustered = clusterize(signals, zoom).slice(0, params.limit ?? 500);
 
   return NextResponse.json(
     { signals: clustered, total: signals.length, zoom },

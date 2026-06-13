@@ -28,6 +28,55 @@ function deriveVerification(ev: Record<string, unknown>): VerificationStatus {
   return 'unverified';
 }
 
+// Canonical institutional references per category — fallback when sourceCluster is empty
+const CATEGORY_DEFAULT_SOURCES: Record<string, Signal['sourceCluster']> = {
+  remote_warfare: [
+    { outlet: 'ACLED', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://acleddata.com', publishedAt: null, language: 'en', title: 'ACLED — Armed Conflict Location & Event Data', excerpt: 'Structured event-level conflict data used as primary reference.', sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'UNOCHA', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.unocha.org', publishedAt: null, language: 'en', title: 'UNOCHA — Humanitarian situation reports', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  migration_rescue: [
+    { outlet: 'UNHCR', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://data.unhcr.org', publishedAt: null, language: 'en', title: 'UNHCR — Displacement & arrivals data portal', excerpt: 'Arrivals, dead and missing along migration routes.', sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'IOM Missing Migrants Project', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://missingmigrants.iom.int', publishedAt: null, language: 'en', title: 'IOM — Missing Migrants Project', excerpt: 'Deaths and disappearances along migration routes.', sourceType: 'institutional', reliability: 'high' },
+  ],
+  maritime_routes: [
+    { outlet: 'IMB Piracy Reporting Centre', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.icc-ccs.org/piracy-reporting-centre', publishedAt: null, language: 'en', title: 'IMB — Maritime security & piracy reports', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'UNCTAD', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://unctad.org/topic/transport-and-trade-logistics/review-of-maritime-transport', publishedAt: null, language: 'en', title: 'UNCTAD — Review of Maritime Transport', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  arms_trade: [
+    { outlet: 'SIPRI Arms Transfers Database', country: 'Sweden', region: 'institutional', perspectiveGroup: null, url: 'https://www.sipri.org/databases/armstransfers', publishedAt: null, language: 'en', title: 'SIPRI — Arms Transfers Database', excerpt: 'Register of major conventional arms deliveries by supplier and recipient.', sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'UN Register of Conventional Arms', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.unroca.org', publishedAt: null, language: 'en', title: 'UNROCA — state-reported transfers', excerpt: null, sourceType: 'government', reliability: 'medium' },
+  ],
+  energy_extraction: [
+    { outlet: 'IEA', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.iea.org', publishedAt: null, language: 'en', title: 'IEA — Energy data and statistics', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'Global Energy Monitor', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://globalenergymonitor.org', publishedAt: null, language: 'en', title: 'Global Energy Monitor — fossil fuel infrastructure tracker', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  canal_politics: [
+    { outlet: 'Suez Canal Authority', country: 'Egypt', region: 'institutional', perspectiveGroup: null, url: 'https://www.suezcanal.gov.eg', publishedAt: null, language: 'en', title: 'SCA — official statistics and transit data', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  climate_fire_desert: [
+    { outlet: 'Copernicus Climate Change Service', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://climate.copernicus.eu', publishedAt: null, language: 'en', title: 'Copernicus C3S — climate monitoring', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'IPCC', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.ipcc.ch', publishedAt: null, language: 'en', title: 'IPCC — Assessment reports', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  infrastructure_failure: [
+    { outlet: 'UNOCHA', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.unocha.org', publishedAt: null, language: 'en', title: 'UNOCHA — Infrastructure and humanitarian data', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  tech_surveillance: [
+    { outlet: 'Access Now', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.accessnow.org/keepiton', publishedAt: null, language: 'en', title: 'Access Now — #KeepItOn internet shutdown tracker', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'Citizen Lab', country: 'Canada', region: 'institutional', perspectiveGroup: null, url: 'https://citizenlab.ca', publishedAt: null, language: 'en', title: 'Citizen Lab — digital surveillance research', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  border_regimes: [
+    { outlet: 'UNHCR', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://data.unhcr.org', publishedAt: null, language: 'en', title: 'UNHCR — border and asylum data', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'Border Violence Monitoring Network', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://borderviolence.eu', publishedAt: null, language: 'en', title: 'BVMN — pushback documentation', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  satellite_signals: [
+    { outlet: 'Copernicus Emergency Management Service', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://emergency.copernicus.eu', publishedAt: null, language: 'en', title: 'Copernicus EMS — satellite imagery and crisis mapping', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+    { outlet: 'Planet Labs', country: 'United States', region: 'institutional', perspectiveGroup: null, url: 'https://www.planet.com', publishedAt: null, language: 'en', title: 'Planet Labs — daily satellite imagery', excerpt: null, sourceType: 'institutional', reliability: 'high' },
+  ],
+  gov_docs: [
+    { outlet: 'UN Documentation Centre', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.un.org/en/library/', publishedAt: null, language: 'en', title: 'UN Documentation — resolutions and reports', excerpt: null, sourceType: 'government', reliability: 'high' },
+  ],
+};
+
 function deriveSourceDiversity(ev: Record<string, unknown>): SourceDiversity[] {
   const sc = ev.sourceCluster as Array<{ perspectiveGroup?: string }> | undefined;
   if (!Array.isArray(sc) || sc.length === 0) return ['single_source'];
@@ -90,7 +139,13 @@ export function transformEvents(raw: Record<string, unknown>[]): Signal[] {
         status: ev.status as string,
         verification: deriveVerification(ev),
         sourceDiversity: deriveSourceDiversity(ev),
-        sourceCluster: (ev.sourceCluster as Signal['sourceCluster']) || [],
+        sourceCluster: (() => {
+          const sc = (ev.sourceCluster as Signal['sourceCluster']) || [];
+          if (sc.length > 0) return sc;
+          return CATEGORY_DEFAULT_SOURCES[ev.category as string] || [
+            { outlet: 'UNOCHA', country: null, region: 'institutional', perspectiveGroup: null, url: 'https://www.unocha.org', publishedAt: null, language: 'en', title: 'UNOCHA — Situation reports', excerpt: null, sourceType: 'institutional', reliability: 'medium' },
+          ];
+        })(),
         perspectives: persp
           ? Object.fromEntries(
               Object.entries(persp).map(([k, v]) => [

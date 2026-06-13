@@ -13,9 +13,27 @@
   --accent:     #57E7FF;
   --alert:      #FF5470;
   --success:    #6FE3A5;
+  /* safe-area insets — respected on iPad notch/home-bar */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  --bar-height: 44px;
 }
 
-html, body { height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font-mono); overflow: hidden; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  /* smooth momentum scroll on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* remove 300ms tap delay everywhere */
+  touch-action: manipulation;
+}
+
+button { touch-action: manipulation; }
 
 /* Cesium widget overrides */
 .cesium-viewer .cesium-viewer-bottom,
@@ -23,7 +41,99 @@ html, body { height: 100%; background: var(--bg); color: var(--fg); font-family:
 .cesium-viewer-toolbar { display: none !important; }
 .cesium-container { user-select: none; }
 
+.globeShell {
+  position: fixed;
+  top: calc(var(--bar-height) + var(--safe-top));
+  left: var(--safe-left);
+  right: var(--safe-right);
+  bottom: 0;
+  transition: right 240ms cubic-bezier(0.22, 1, 0.36, 1),
+              bottom 240ms cubic-bezier(0.22, 1, 0.36, 1),
+              top 180ms ease;
+  will-change: right, bottom;
+}
+.globeShell.withInspector { right: calc(360px + var(--safe-right)); }
+
+/* CRT scanline overlay — forensic terminal aesthetic, pointer-events:none so clicks pass through */
+.globeShell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  z-index: 5;
+  mix-blend-mode: multiply;
+}
+
+.statusBadge {
+  position: fixed;
+  bottom: calc(16px + var(--safe-bottom));
+  left: calc(16px + var(--safe-left));
+  z-index: 70;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #2a4055;
+  text-transform: uppercase;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── iPad portrait (768–1024px) ─── */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+  :root { --bar-height: 52px; }
+
+  .globeShell.withInspector {
+    right: var(--safe-right);
+    bottom: 52vh;
+  }
+
+  .statusBadge {
+    left: calc(12px + var(--safe-left));
+    bottom: calc(52vh + 10px);
+  }
+}
+
+/* ─── iPad landscape (769–1366px landscape) ─── */
+@media (min-width: 769px) and (max-width: 1366px) and (orientation: landscape) {
+  :root { --bar-height: 48px; }
+
+  .globeShell.withInspector {
+    right: calc(320px + var(--safe-right));
+  }
+}
+
+/* ─── Phone (≤768px) ─── */
+@media (max-width: 768px) {
+  :root { --bar-height: 80px; }
+
+  .globeShell {
+    right: var(--safe-right);
+    bottom: 0;
+  }
+  .globeShell.withInspector {
+    right: var(--safe-right);
+    bottom: 48vh;
+  }
+  .statusBadge {
+    left: calc(10px + var(--safe-left));
+    bottom: calc(48vh + 8px);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    opacity: 0.72;
+  }
+  .statusBadge span:last-child { display: none; }
+}

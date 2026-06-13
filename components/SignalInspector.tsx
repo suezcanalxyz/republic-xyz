@@ -35,6 +35,7 @@ export default function SignalInspector({ signalId, onClose }: Props) {
 
   return (
     <div className={styles.inspector}>
+      <div className={styles.dragHandle} aria-hidden="true" />
       <div className={styles.header}>
         {cat && (
           <span className={styles.catBadge} style={{ borderColor: cat.color, color: cat.color }}>

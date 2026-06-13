@@ -1,14 +1,17 @@
 .bar {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: var(--safe-top, 0px);
+  left: var(--safe-left, 0px);
+  right: var(--safe-right, 0px);
   z-index: 100;
-  height: 44px;
+  height: var(--bar-height, 44px);
   display: flex;
   align-items: center;
   gap: 0;
   background: rgba(3, 8, 16, 0.88);
   border-bottom: 1px solid #0f2035;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -24,6 +27,7 @@
 }
 .modeBtn {
   height: 100%;
+  min-width: 44px;
   padding: 0 14px;
   background: transparent;
   border: none;
@@ -34,6 +38,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .modeBtn:hover { color: #8ab4d4; }
 .modeBtn.active {
@@ -49,6 +54,7 @@
   display: flex;
   align-items: center;
   padding: 0 12px;
+  min-width: 0;
 }
 .search {
   width: 100%;
@@ -59,23 +65,31 @@
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.05em;
+  /* prevent iOS zoom on focus */
+  font-size: max(11px, 16px);
+}
+@media (min-width: 600px) {
+  .search { font-size: 11px; }
 }
 .search::placeholder { color: #344d61; text-transform: none; }
 .results {
   position: absolute;
-  top: 44px; left: 0; right: 0;
+  top: var(--bar-height, 44px);
+  left: 0; right: 0;
   background: rgba(3, 8, 16, 0.97);
   border: 1px solid #0f2035;
   border-top: none;
   max-height: 320px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .result {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 7px 12px;
+  min-height: 44px;
+  padding: 8px 12px;
   background: transparent;
   border: none;
   border-bottom: 1px solid #0a1825;
@@ -86,8 +100,9 @@
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.result:hover { background: #091422; color: #c8d8e8; }
+.result:hover, .result:active { background: #091422; color: #c8d8e8; }
 .resultDot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .resultTitle { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .resultLoc { color: #3d5a70; flex-shrink: 0; font-size: 9px; }
@@ -110,6 +125,7 @@
 }
 .timeBtn {
   height: 100%;
+  min-width: 44px;
   padding: 0 9px;
   background: transparent;
   border: none;
@@ -119,12 +135,14 @@
   font-size: 10px;
   letter-spacing: 0.1em;
   transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 .timeBtn:hover { color: #7a9ab4; }
 .timeBtn.active { color: #57E7FF; }
 
 .layersBtn {
   height: 32px;
+  min-width: 44px;
   padding: 0 10px;
   margin: 0 4px;
   background: #060f1a;
@@ -137,8 +155,11 @@
   text-transform: uppercase;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   transition: color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 .layersBtn:hover, .layersBtn.active {
   color: #57E7FF;
@@ -154,12 +175,15 @@
 
 .layersPanel {
   position: absolute;
-  top: 44px; right: 0;
+  top: var(--bar-height, 44px);
+  right: 0;
   width: 220px;
   background: rgba(3, 8, 16, 0.97);
   border: 1px solid #0f2035;
   padding: 6px 0;
   z-index: 200;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 .layersPanelHead {
   display: flex;
@@ -179,13 +203,17 @@
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  min-height: 44px;
+  padding: 0 8px;
+  -webkit-tap-highlight-color: transparent;
 }
 .layerItem {
   display: flex;
   align-items: center;
   gap: 7px;
   width: 100%;
-  padding: 5px 10px;
+  min-height: 40px;
+  padding: 6px 10px;
   background: transparent;
   border: none;
   color: #4a6a82;
@@ -195,16 +223,18 @@
   letter-spacing: 0.08em;
   text-align: left;
   transition: color 0.1s;
+  -webkit-tap-highlight-color: transparent;
 }
-.layerItem:hover { color: #8ab4d4; }
+.layerItem:hover, .layerItem:active { color: #8ab4d4; }
 .layerItem.layerOn { color: #c8d8e8; }
-.layerDot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; opacity: 0.5; }
+.layerDot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: 0.5; }
 .layerItem.layerOn .layerDot { opacity: 1; }
 .layerAbbr { color: inherit; font-size: 9px; letter-spacing: 0.12em; width: 32px; flex-shrink: 0; }
 .layerLabel { color: inherit; font-size: 10px; }
 
 .loginBtn {
   height: 32px;
+  min-width: 44px;
   padding: 0 8px;
   background: transparent;
   border: 1px solid #0a1825;
@@ -212,4 +242,158 @@
   cursor: default;
   font-family: inherit;
   font-size: 14px;
+}
+
+/* ─── iPad portrait (769–1024px portrait) ─── */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+  .bar { height: 52px; }
+
+  .modeBtn {
+    padding: 0 16px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .timeBtn {
+    padding: 0 12px;
+    font-size: 11px;
+    min-width: 48px;
+  }
+
+  .layersBtn {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 11px;
+    min-width: 48px;
+  }
+
+  .layerItem { min-height: 46px; font-size: 12px; }
+  .layersPanel { width: 260px; }
+  .results { max-height: 52vh; }
+}
+
+/* ─── iPad landscape (769–1366px landscape) ─── */
+@media (min-width: 769px) and (max-width: 1366px) and (orientation: landscape) {
+  .bar { height: 48px; }
+
+  .modeBtn {
+    padding: 0 14px;
+    font-size: 10px;
+  }
+
+  .layerItem { min-height: 44px; }
+  .layersPanel { width: 240px; }
+}
+
+/* ─── Phone (≤768px): 2-row layout ─── */
+@media (max-width: 768px) {
+  /* Row 1: modes (44px), Row 2: search + controls (36px) = 80px total */
+  .bar {
+    height: 80px;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: stretch;
+    background: rgba(3, 8, 16, 0.95);
+    gap: 0;
+  }
+
+  /* Row 1 — full-width modes strip */
+  .modes {
+    order: 0;
+    width: 100%;
+    height: 44px;
+    max-width: none;
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    border-right: none;
+    border-bottom: 1px solid #0a1825;
+    align-items: center;
+    display: flex;
+    /* fade gradient signals scrollability */
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  }
+  .modes::-webkit-scrollbar { display: none; }
+  .modeBtn {
+    min-width: 64px;
+    height: 44px;
+    padding: 0 12px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .modeBtn:not(.active) { color: #4a6a82; }
+
+  /* Row 2 — search + controls */
+  .searchWrap {
+    order: 1;
+    flex: 1;
+    height: 36px;
+    min-width: 0;
+    padding: 0 10px;
+    border-bottom: none;
+  }
+  .search { font-size: max(11px, 16px); }
+  .search::placeholder { color: #1e3a50; }
+
+  .controls {
+    order: 2;
+    height: 36px;
+    padding: 0 6px;
+    border-left-color: #0a1825;
+    flex-shrink: 0;
+  }
+  .timeGroup {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .timeGroup::-webkit-scrollbar { display: none; }
+  .timeBtn {
+    min-width: 36px;
+    padding: 0 6px;
+    font-size: 9px;
+    height: 36px;
+  }
+  .layersBtn {
+    width: 36px;
+    height: 28px;
+    min-width: 36px;
+    font-size: 0;
+    padding: 0;
+    margin: 0 2px;
+  }
+  .layersBtn::before {
+    content: 'L';
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .layerCount {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    padding: 0 3px;
+    font-size: 8px;
+  }
+  .loginBtn { display: none; }
+
+  /* Panels reference the full bar height */
+  .layersPanel {
+    top: 80px;
+    right: 4px;
+    width: min(300px, calc(100vw - 16px));
+    max-height: calc(100svh - 96px);
+    overflow-y: auto;
+  }
+  .results {
+    position: fixed;
+    top: 80px;
+    left: 8px;
+    right: 8px;
+    max-height: 44vh;
+  }
+  .result { min-height: 48px; padding: 10px; font-size: 11px; }
+  .resultLoc { display: none; }
 }
