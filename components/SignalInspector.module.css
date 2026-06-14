@@ -345,6 +345,78 @@
   padding: 8px 0;
 }
 
+/* ─── Intel tab ─── */
+.intelTab {
+  color: #9AA7FF !important;
+}
+.intelTab.activeTab {
+  color: #9AA7FF !important;
+  border-bottom-color: #9AA7FF !important;
+}
+
+.intelPrompt {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 0;
+}
+.intelDesc {
+  font-size: 10px;
+  color: #3d5a70;
+  text-transform: none;
+  letter-spacing: 0.03em;
+  line-height: 1.7;
+  margin: 0;
+}
+.intelBtn {
+  align-self: flex-start;
+  background: #0a1428;
+  border: 1px solid #9AA7FF44;
+  color: #9AA7FF;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 40px;
+}
+.intelBtn:hover, .intelBtn:active {
+  border-color: #9AA7FF;
+  background: #0f1c38;
+}
+.intelError {
+  font-size: 9px;
+  color: #FF5470;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.intelLoading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 0;
+  font-size: 10px;
+  color: #3d5a70;
+  letter-spacing: 0.08em;
+}
+@keyframes nimPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.intelSpinner {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9AA7FF;
+  animation: nimPulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
 /* ─── iPad portrait (769–1024px portrait): bottom sheet ─── */
 @media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
   .inspector {

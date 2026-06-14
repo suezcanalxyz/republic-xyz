@@ -1,5 +1,6 @@
 import type { Signal } from '../types';
 import { getCached, setCached } from '../cache';
+import { enrichSignals } from './nim-enrichment';
 
 const GDACS_URL = 'https://www.gdacs.org/xml/rss.xml';
 const CACHE_KEY = 'gdacs:rss';
@@ -109,5 +110,11 @@ export async function fetchGdacsSignals(): Promise<Signal[]> {
   }
 
   setCached(CACHE_KEY, signals, TTL_MS);
+
+  // Async NIM enrichment — update cache after completion, non-blocking
+  enrichSignals(signals).then(enriched => {
+    if (enriched !== signals) setCached(CACHE_KEY, enriched, TTL_MS);
+  }).catch(() => {});
+
   return signals;
 }

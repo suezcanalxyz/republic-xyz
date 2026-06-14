@@ -55,8 +55,9 @@ function cameraHeightToZoom(height: number): number {
 }
 
 // High-contrast multi-category heatmap blob.
-// Canvas uses BOTTOM vertical origin: geo-point is at bottom of sprite,
-// so we place the visual cluster at the BOTTOM of the canvas (cy close to bottom).
+// BOTTOM vertical origin: canvas anchor = geo-point.
+// Circle centered in upper 70% of canvas → transparent padding below.
+// All circle pixels are above anchor in screen-space → above globe surface in depth buffer → pass depth test.
 function createHeatmapMarker(categories: string[], count: number, active: boolean): string {
   const W = 80;
   const H = 80;
@@ -67,9 +68,9 @@ function createHeatmapMarker(categories: string[], count: number, active: boolea
   if (!ctx) return '';
 
   const cx  = W / 2;
-  const cy  = H / 2;
-  const outerR = active ? 34 : 30;
-  const innerR = 14;
+  const cy  = 30; // upper portion — bottom 20px is transparent padding
+  const outerR = active ? 26 : 23;
+  const innerR = 12;
   const primaryHex = CATEGORIES[categories[0]]?.color ?? '#8899AA';
 
   // Wide outer glow
@@ -201,24 +202,17 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
     // Remove any default imagery Cesium adds automatically
     viewer.imageryLayers.removeAll();
 
-    // Elegant political basemap — CartoDB Dark Matter (no labels), ~3KB/tile
-    // On mobile: deferred until first touch to unblock initial paint
-    const loadPoliticalTiles = () => {
-      if (politicalLayerRef.current || !viewerRef.current) return;
-      const provider = new C.UrlTemplateImageryProvider({
-        url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png',
-        subdomains: ['a', 'b', 'c', 'd'],
-        maximumLevel: 19,
-        credit: '© OpenStreetMap contributors © CARTO',
-      });
-      politicalLayerRef.current = viewerRef.current.imageryLayers.addImageryProvider(provider);
-      politicalLayerRef.current.alpha = 0.82;
-      politicalLayerRef.current.brightness = 1.05;
-      viewerRef.current.scene.requestRender();
-    };
-
-    // Load immediately on all devices — CartoDB tiles are 3KB each, no perf concern
-    loadPoliticalTiles();
+    // Political basemap — CartoDB Dark Matter no-labels, elegant country borders
+    // Use local `viewer` directly (viewerRef.current not set until end of initViewer)
+    const politicalProvider = new C.UrlTemplateImageryProvider({
+      url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png',
+      subdomains: ['a', 'b', 'c', 'd'],
+      maximumLevel: 19,
+      credit: '© OpenStreetMap contributors © CARTO',
+    });
+    politicalLayerRef.current = viewer.imageryLayers.addImageryProvider(politicalProvider);
+    politicalLayerRef.current.alpha = 0.85;
+    politicalLayerRef.current.brightness = 1.1;
 
     // Dark blue-grey globe — forensic aesthetic, visible landmass silhouette
     viewer.scene.globe.baseColor = C.Color.fromCssColorString('#0d1f2d');
@@ -352,7 +346,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
       // Cache key includes all categories so multi-cat clusters render correctly
       const cacheKey = `${item.categories.slice(0, 3).join(',')}:${item.count}:${isActive ? 'a' : 'i'}`;
       // +100m above ellipsoid surface to avoid z-fighting, enables proper globe depth occlusion
-      const position = C.Cartesian3.fromDegrees(item.lng, item.lat, 1000);
+      const position = C.Cartesian3.fromDegrees(item.lng, item.lat, 100);
 
       const existing = entitiesRef.current.get(item.id);
       if (existing) {
@@ -387,11 +381,10 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
           billboard: {
             image: markerCacheRef.current.get(cacheKey),
             scale: 0, // animate in from 0
-            verticalOrigin: C.VerticalOrigin.CENTER,
+            // BOTTOM: all circle pixels above anchor → pass depth test; ellipsoid culls back-side
+            verticalOrigin: C.VerticalOrigin.BOTTOM,
             horizontalOrigin: C.HorizontalOrigin.CENTER,
-            // Infinity: skip per-pixel depth clipping → full circle visible
-            // Back-side occlusion handled by Cesium's ellipsoid occluder (built-in)
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            disableDepthTestDistance: 0,
             scaleByDistance: new C.NearFarScalar(1e6, 0.7, 1.9e7, 0.38),
             translucencyByDistance: new C.NearFarScalar(8e5, 1, 2.0e7, 0.88),
           },

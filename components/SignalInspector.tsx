@@ -10,16 +10,54 @@ interface Props {
   onClose: () => void;
 }
 
-type Tab = 'overview' | 'evidence' | 'sources' | 'perspectives' | 'reading';
+type Tab = 'overview' | 'evidence' | 'sources' | 'perspectives' | 'reading' | 'intel';
+
+interface IntelResult {
+  actors: string[];
+  systemicContext: string;
+  relatedDynamics: string[];
+  confidenceNote: string;
+  sourceGaps: string[];
+  nim_model: string;
+}
 
 export default function SignalInspector({ signalId, onClose }: Props) {
   const [signal, setSignal] = useState<Signal | null>(null);
   const [related, setRelated] = useState<Signal[]>([]);
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(false);
+  const [intel, setIntel] = useState<IntelResult | null>(null);
+  const [intelLoading, setIntelLoading] = useState(false);
+  const [intelError, setIntelError] = useState<string | null>(null);
+
+  const runIntel = async () => {
+    if (!signal) return;
+    setIntelLoading(true);
+    setIntelError(null);
+    try {
+      const res = await fetch('/api/intel/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: signal.title,
+          summary: signal.summary,
+          category: signal.category,
+          location: signal.location.name,
+          tags: signal.tags,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) setIntelError(data.hint ?? data.error ?? 'Analysis failed');
+      else setIntel(data as IntelResult);
+    } catch {
+      setIntelError('Network error');
+    } finally {
+      setIntelLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!signalId) { setSignal(null); setRelated([]); return; }
+    if (!signalId) { setSignal(null); setRelated([]); setIntel(null); return; }
     setLoading(true);
     setTab('overview');
     fetch(`/api/atlas/signal/${signalId}`)
@@ -73,13 +111,13 @@ export default function SignalInspector({ signalId, onClose }: Props) {
 
           {/* Tabs */}
           <div className={styles.tabs}>
-            {(['overview', 'evidence', 'sources', 'perspectives', 'reading'] as Tab[]).map(t => (
+            {(['overview', 'evidence', 'sources', 'perspectives', 'reading', 'intel'] as Tab[]).map(t => (
               <button
                 key={t}
-                className={`${styles.tab} ${tab === t ? styles.activeTab : ''}`}
+                className={`${styles.tab} ${tab === t ? styles.activeTab : ''} ${t === 'intel' ? styles.intelTab : ''}`}
                 onClick={() => setTab(t)}
               >
-                {t}
+                {t === 'intel' ? '⬡ intel' : t}
               </button>
             ))}
           </div>
@@ -239,6 +277,77 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                   Republic Readings situate the signal within the political project of the Suez Canal Republic.
                   They are editorial, not neutral.
                 </div>
+              </div>
+            )}
+
+            {tab === 'intel' && (
+              <div>
+                {!intel && !intelLoading && (
+                  <div className={styles.intelPrompt}>
+                    <p className={styles.intelDesc}>
+                      Run AI analysis via NVIDIA NIM (Llama 3.1 70B).
+                      Extracts actors, systemic context, and source gaps.
+                    </p>
+                    <button className={styles.intelBtn} onClick={runIntel}>
+                      Analyze signal
+                    </button>
+                    {intelError && (
+                      <p className={styles.intelError}>{intelError}</p>
+                    )}
+                  </div>
+                )}
+                {intelLoading && (
+                  <div className={styles.intelLoading}>
+                    <span className={styles.intelSpinner} />
+                    <span>Querying NIM · Llama 3.1 70B…</span>
+                  </div>
+                )}
+                {intel && !intelLoading && (
+                  <div>
+                    <div className={styles.section}>
+                      <div className={styles.sectionHead}>Actors identified</div>
+                      <div className={styles.tags}>
+                        {intel.actors.map(a => (
+                          <span key={a} className={styles.tag}>{a}</span>
+                        ))}
+                        {intel.actors.length === 0 && <span className={styles.empty}>None identified</span>}
+                      </div>
+                    </div>
+                    <div className={styles.section}>
+                      <div className={styles.sectionHead}>Systemic context</div>
+                      <p className={styles.text}>{intel.systemicContext}</p>
+                    </div>
+                    <div className={styles.section}>
+                      <div className={styles.sectionHead}>Related dynamics</div>
+                      {intel.relatedDynamics.map((d, i) => (
+                        <div key={i} className={styles.diversityItem}>
+                          <span className={styles.diversityDot} />
+                          {d}
+                        </div>
+                      ))}
+                    </div>
+                    <div className={styles.section}>
+                      <div className={styles.sectionHead}>Source gaps</div>
+                      {intel.sourceGaps.map((g, i) => (
+                        <div key={i} className={styles.diversityItem}>
+                          <span className={styles.diversityDot} style={{ background: '#FF5470' }} />
+                          {g}
+                        </div>
+                      ))}
+                    </div>
+                    <div className={styles.infoNote}>{intel.confidenceNote}</div>
+                    <div className={styles.infoNote} style={{ opacity: 0.4 }}>
+                      {intel.nim_model}
+                    </div>
+                    <button
+                      className={styles.intelBtn}
+                      style={{ marginTop: 12, opacity: 0.6 }}
+                      onClick={() => { setIntel(null); runIntel(); }}
+                    >
+                      Re-analyze
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
