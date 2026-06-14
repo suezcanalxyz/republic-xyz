@@ -242,6 +242,16 @@
   padding: 8px 0;
   border-bottom: 1px solid #080f18;
 }
+.evidenceThumb {
+  display: block;
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  margin-bottom: 8px;
+  border: 1px solid #0f2035;
+  opacity: 0.88;
+}
+
 .evidenceOutlet { font-size: 10px; color: #7aa0c0; letter-spacing: 0.06em; margin-bottom: 2px; }
 .evidenceTitle { font-size: 10px; color: #5a7a9a; text-transform: none; letter-spacing: 0.02em; margin-bottom: 2px; }
 .evidenceExcerpt { font-size: 9px; color: #3d5a70; text-transform: none; letter-spacing: 0.02em; line-height: 1.5; }

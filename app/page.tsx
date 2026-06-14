@@ -54,7 +54,7 @@ export default function AtlasPage() {
   const [signals, setSignals] = useState<ClusteredSignal[]>([]);
   const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('event');
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>('all');
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set());
   const [zoom, setZoom] = useState(2);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);

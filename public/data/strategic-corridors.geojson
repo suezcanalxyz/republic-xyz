@@ -1,0 +1,96 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "BRI — China-Europe Rail (New Silk Road)", "type": "bri_land", "label": "Silk Road" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [121.5, 31.2], [116.4, 39.9], [106.5, 38.0], [87.6, 43.8], [75.0, 43.0], [68.8, 38.6], [63.6, 43.0], [58.4, 50.3], [49.1, 55.8], [37.6, 55.7], [32.0, 53.0], [23.7, 52.0], [14.5, 52.5], [2.3, 48.9]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BRI — China-Pakistan Corridor (CPEC)", "type": "bri_land", "label": "CPEC" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [121.5, 31.2], [108.0, 22.0], [101.0, 21.0], [98.0, 23.0], [95.0, 27.0], [90.0, 27.0], [79.5, 35.5], [74.3, 36.5], [72.0, 34.0], [67.0, 27.0], [62.3, 25.4], [62.3, 24.9]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BRI — Maritime Silk Road", "type": "bri_maritime", "label": "Maritime Silk Road" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [121.5, 31.2], [114.2, 22.3], [108.2, 16.1], [103.8, 1.3], [99.0, 3.8], [93.0, 10.9], [80.3, 6.9], [73.0, 18.9], [63.6, 23.6], [57.7, 23.6], [55.3, 25.2], [44.4, 14.5], [43.2, 11.6], [38.5, 15.6], [32.3, 29.9], [32.2, 31.5], [25.4, 36.8], [12.6, 37.7], [2.2, 41.4]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BRI — Africa Eastern Corridor", "type": "bri_land", "label": "BRI Africa East" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [36.8, -1.3], [37.0, -6.2], [35.0, -8.9], [33.0, -13.5], [35.5, -17.8], [36.0, -20.0], [32.6, -25.9]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Northern Sea Route (Arctic)", "type": "arctic", "label": "Northern Sea Route" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [28.2, 59.5], [33.1, 68.9], [50.0, 71.5], [60.0, 73.0], [80.0, 73.5], [100.0, 73.5], [120.0, 73.0], [135.0, 71.5], [155.0, 68.5], [170.0, 65.0], [180.0, 63.0], [-178.0, 60.0], [-170.0, 60.0], [-160.0, 58.0], [-145.0, 55.0], [-135.0, 48.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Northwest Passage (Arctic)", "type": "arctic", "label": "Northwest Passage" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-52.7, 47.6], [-60.0, 60.0], [-65.0, 63.0], [-70.0, 66.5], [-80.0, 70.0], [-90.0, 72.0], [-100.0, 75.0], [-110.0, 76.0], [-120.0, 74.0], [-130.0, 70.0], [-140.0, 65.0], [-145.0, 60.5], [-135.0, 48.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Trans-Siberian Energy Corridor", "type": "energy_corridor", "label": "Trans-Siberian" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [37.6, 55.7], [55.0, 55.0], [73.4, 54.9], [90.0, 57.0], [105.0, 55.0], [116.4, 39.9], [121.5, 31.2]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Russia-Europe Gas Corridors", "type": "energy_corridor", "label": "Russia-EU Gas" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [68.0, 65.0], [52.0, 64.0], [37.6, 55.7], [28.2, 59.5], [18.0, 57.5], [12.0, 57.0], [10.0, 53.5], [6.0, 51.4], [4.5, 52.4]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Strait of Hormuz Chokepoint", "type": "chokepoint", "label": "Hormuz" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [55.0, 23.0], [56.5, 26.5], [58.6, 23.6], [59.5, 22.4], [57.5, 23.6], [55.3, 25.2]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Suez Canal Corridor", "type": "chokepoint", "label": "Suez" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [28.5, 36.8], [30.0, 34.0], [32.3, 29.9], [32.5, 27.5], [32.6, 25.0], [32.5, 21.0], [43.1, 11.6]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Bab el-Mandeb", "type": "chokepoint", "label": "Bab el-Mandeb" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [43.1, 11.6], [43.3, 12.0], [43.7, 12.8], [44.5, 13.5]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Malacca Strait", "type": "chokepoint", "label": "Malacca" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [103.8, 1.3], [102.0, 2.5], [100.5, 4.0], [99.0, 5.5], [98.5, 6.5], [97.0, 8.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Cape of Good Hope Route", "type": "diversion_route", "label": "Cape Route" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [2.2, 41.4], [2.0, 36.0], [0.0, 25.0], [-5.0, 10.0], [-15.0, -5.0], [-15.0, -20.0], [-10.0, -30.0], [0.0, -34.0], [10.0, -35.0], [18.5, -33.9], [26.0, -33.9], [35.0, -26.0], [40.0, -20.0], [45.0, -12.0], [55.0, 10.0], [57.7, 23.6]
+      ]}
+    }
+  ]
+}

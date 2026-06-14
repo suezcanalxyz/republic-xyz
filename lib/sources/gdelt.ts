@@ -16,16 +16,25 @@ const TIMESPAN = 20160; // minutes = 14 days
 
 // Themes → ATLAS category mapping
 const QUERIES: Array<{ q: string; category: string; tags: string[] }> = [
-  { q: 'conflict war attack airstrike military',      category: 'remote_warfare',         tags: ['conflict', 'military'] },
-  { q: 'migration refugee asylum crossing border',    category: 'migration_rescue',        tags: ['migration', 'displacement'] },
-  { q: 'maritime ship tanker port strait',            category: 'maritime_routes',         tags: ['maritime', 'shipping'] },
-  { q: 'energy pipeline gas oil sanctions',           category: 'energy_extraction',       tags: ['energy', 'resources'] },
-  { q: 'climate flood wildfire drought disaster',     category: 'climate_fire_desert',     tags: ['climate', 'environment'] },
-  { q: 'surveillance drone technology cyber hack',    category: 'tech_surveillance',       tags: ['tech', 'surveillance'] },
-  { q: 'arms weapons transfer export military aid',   category: 'arms_trade',              tags: ['arms', 'weapons'] },
-  { q: 'canal suez panama hormuz strait passage',     category: 'canal_politics',          tags: ['canal', 'transit'] },
-  { q: 'infrastructure collapse failure power grid',  category: 'infrastructure_failure',  tags: ['infrastructure', 'critical'] },
-  { q: 'border wall fence deportation expulsion',     category: 'border_regimes',          tags: ['border', 'enforcement'] },
+  { q: 'conflict war attack airstrike military strike',        category: 'remote_warfare',         tags: ['conflict', 'military'] },
+  { q: 'migration refugee asylum crossing drowning rescue',    category: 'migration_rescue',        tags: ['migration', 'displacement'] },
+  { q: 'maritime ship tanker port strait blockade piracy',     category: 'maritime_routes',         tags: ['maritime', 'shipping'] },
+  { q: 'energy pipeline gas oil sanctions embargo',            category: 'energy_extraction',       tags: ['energy', 'resources'] },
+  { q: 'climate flood wildfire drought hurricane cyclone',     category: 'climate_fire_desert',     tags: ['climate', 'environment'] },
+  { q: 'surveillance drone cyber attack hack intelligence',    category: 'tech_surveillance',       tags: ['tech', 'surveillance'] },
+  { q: 'arms weapons transfer export military aid supply',     category: 'arms_trade',              tags: ['arms', 'weapons'] },
+  { q: 'canal suez panama hormuz strait passage route',        category: 'canal_politics',          tags: ['canal', 'transit'] },
+  { q: 'infrastructure collapse failure blackout power grid',  category: 'infrastructure_failure',  tags: ['infrastructure', 'critical'] },
+  { q: 'border wall fence deportation expulsion crackdown',    category: 'border_regimes',          tags: ['border', 'enforcement'] },
+  // Regional focus queries
+  { q: 'China PLA Taiwan Xinjiang Tibet Hong Kong South China Sea', category: 'remote_warfare',  tags: ['china', 'asia-pacific'] },
+  { q: 'Iran nuclear IRGC sanctions Hezbollah proxy',          category: 'remote_warfare',         tags: ['iran', 'mena'] },
+  { q: 'Italy migration government politics Mediterranean',    category: 'migration_rescue',        tags: ['italy', 'europe'] },
+  { q: 'Venezuela Colombia Brazil Argentina Latin America crisis', category: 'border_regimes',     tags: ['latin-america', 'south-america'] },
+  { q: 'Gaza West Bank Israel Palestine ceasefire humanitarian', category: 'remote_warfare',       tags: ['gaza', 'israel', 'palestine'] },
+  { q: 'Russia Ukraine war ceasefire peace talks NATO',        category: 'remote_warfare',         tags: ['ukraine', 'russia'] },
+  { q: 'Sudan Somalia Ethiopia Congo Africa conflict famine',  category: 'remote_warfare',         tags: ['africa', 'sahel'] },
+  { q: 'submarine cable fiber internet disruption cut',        category: 'infrastructure_failure', tags: ['cables', 'internet'] },
 ];
 
 interface GdeltFeature {
@@ -80,15 +89,20 @@ async function fetchCategory(
     if (!geo.features?.length) return [];
 
     return geo.features
-      .filter(f => f.geometry?.coordinates?.length === 2)
+      .filter(f =>
+        f.geometry?.coordinates?.length === 2 &&
+        f.properties?.url &&
+        f.properties?.title,
+      )
       .slice(0, 20)
       .map((f, i): Signal => {
         const p = f.properties;
         const [lng, lat] = f.geometry.coordinates;
         const date = parseGdeltDate(p.date);
-        const title = p.title || p.name || `${category.replace(/_/g, ' ')} event`;
+        const title = p.title!;
         const domain = p.domain ?? 'unknown source';
         const tone = p.avgTone;
+        const imageUrl = p.shareimage ?? null;
 
         return {
           id: `gdelt:${category}:${Math.abs(lng * 100).toFixed(0)}:${Math.abs(lat * 100).toFixed(0)}:${date}:${i}`,
@@ -96,7 +110,7 @@ async function fetchCategory(
           category,
           tags: [...tags, 'live', 'gdelt', domain.replace(/\..+/, '')],
           title: title.slice(0, 120),
-          summary: `${title}. Geolocated signal from global news monitoring (${domain}).`,
+          summary: title,
           whatHappened: title,
           location: {
             name: p.name || p.sourcecountry || 'Unknown',
@@ -115,18 +129,19 @@ async function fetchCategory(
             country: p.sourcecountry ?? null,
             region: null,
             perspectiveGroup: null,
-            url: p.url ?? undefined,
+            url: p.url!,
             publishedAt: date,
             language: 'en',
             title: title.slice(0, 120),
             excerpt: null,
+            imageUrl,
             sourceType: 'media',
             reliability: 'medium',
           }],
           perspectives: null,
           republicReading: null,
-          methodNote: `Auto-ingested via GDELT GEO API. AvgTone: ${tone?.toFixed(1) ?? 'n/a'}. Coordinates geocoded by GDELT.`,
-          links: p.url ? [{ to: p.url, relation: 'source_article' }] : [],
+          methodNote: `GDELT GEO API · avgTone ${tone?.toFixed(1) ?? 'n/a'} · ${domain}`,
+          links: [{ to: p.url!, relation: 'source_article' }],
           score: Math.max(10, 50 + Math.round((tone ?? 0) * -1.5)),
           visible: true,
         };

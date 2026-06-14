@@ -44,6 +44,7 @@ export interface SourceRef {
   language?: string;
   title?: string;
   excerpt?: string | null;
+  imageUrl?: string | null;
   sourceType?: string;
   reliability?: string;
 }

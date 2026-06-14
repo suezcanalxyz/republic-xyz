@@ -1,0 +1,145 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "SEA-ME-WE 5", "region": "Red Sea / Indian Ocean", "status": "active", "year": 2016 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [103.8, 1.3], [80.3, 6.9], [72.9, 21.5], [43.7, 12.8], [43.1, 11.6], [32.3, 29.9], [28.2, 36.2], [23.7, 37.9], [14.4, 40.9], [12.3, 44.4], [9.2, 38.1], [2.3, 49.2], [-1.6, 48.4]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "AAE-1 (Asia-Africa-Europe)", "region": "Red Sea / Med", "status": "active", "year": 2017 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [121.5, 25.0], [103.8, 1.3], [80.3, 13.1], [50.6, 25.3], [43.2, 11.6], [43.7, 12.8], [32.3, 29.9], [32.2, 31.2], [28.5, 36.4], [19.9, 37.9], [12.6, 37.7], [2.3, 41.3]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "EIG (Europe India Gateway)", "region": "Red Sea / Indian Ocean", "status": "active", "year": 2012 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [73.0, 18.9], [63.6, 23.6], [57.7, 23.6], [55.3, 25.2], [43.2, 11.6], [43.8, 13.0], [32.3, 29.9], [32.2, 31.5], [25.4, 36.8], [14.5, 40.9], [9.2, 38.1], [2.2, 41.4], [-8.6, 40.2]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "2Africa", "region": "Africa Ring", "status": "active", "year": 2024 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [2.3, 49.2], [-8.6, 40.2], [-15.5, 14.7], [-17.4, 14.7], [-23.5, 15.0], [-14.9, 10.8], [-8.5, 4.8], [3.8, 5.3], [13.1, 4.0], [18.5, -4.0], [40.2, -8.5], [43.2, -11.7], [57.5, -20.2], [55.5, -21.1], [40.0, -15.5], [32.5, -25.9], [18.5, -33.9], [-5.7, -15.8], [-8.9, 7.1], [-17.4, 14.7]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "FALCON", "region": "Red Sea / Gulf", "status": "active", "year": 2010 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [55.3, 25.2], [56.3, 24.5], [58.6, 23.6], [59.5, 22.4], [55.3, 12.8], [43.2, 11.6], [43.8, 13.0], [38.5, 15.6], [32.3, 29.9], [32.2, 31.5]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "TAT-14 (Trans-Atlantic)", "region": "Atlantic", "status": "active", "year": 2001 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-74.0, 40.7], [-40.0, 53.0], [-30.0, 57.0], [-8.6, 40.2], [2.3, 49.2], [4.5, 52.4]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "AEConnect-1", "region": "Atlantic", "status": "active", "year": 2016 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-74.0, 40.7], [-52.7, 47.6], [-24.0, 65.0], [-13.4, 65.0], [-22.0, 64.0], [-13.0, 52.7], [-8.6, 51.9]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "MAREA (Facebook/Microsoft)", "region": "North Atlantic", "status": "active", "year": 2018 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-77.0, 38.9], [-60.0, 45.0], [-40.0, 52.0], [-20.0, 55.0], [-10.0, 51.5], [-8.6, 40.2]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BRICS Cable / PEACE", "region": "Africa / Asia", "status": "active", "year": 2022 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [121.5, 25.0], [110.3, 20.5], [103.8, 1.3], [99.0, 3.8], [93.0, 10.9], [73.0, 18.9], [55.3, 25.2], [43.2, 11.6], [43.7, 12.8], [41.3, 2.0], [40.2, -8.5], [35.5, -18.9], [18.5, -33.9], [-7.0, 5.8], [2.3, 41.3]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Pacific Light Cable (HK–LA)", "region": "Pacific", "status": "active", "year": 2022 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [114.2, 22.3], [124.0, 25.0], [135.0, 35.0], [155.0, 45.0], [175.0, 50.0], [-175.0, 53.0], [-155.0, 55.0], [-135.0, 48.0], [-118.2, 34.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Jupiter (Japan–US)", "region": "Pacific", "status": "active", "year": 2020 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [135.5, 34.7], [139.7, 35.7], [148.0, 40.0], [160.0, 45.0], [180.0, 50.0], [-175.0, 52.0], [-160.0, 55.0], [-130.0, 46.0], [-118.2, 34.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BtoBE (Baltic Sea)", "region": "Baltic", "status": "active", "year": 2019 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [4.5, 52.4], [10.0, 55.6], [12.5, 55.7], [18.0, 57.5], [24.9, 60.2], [28.2, 59.5], [30.3, 59.9]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Arctic Fibre / Quintillion", "region": "Arctic", "status": "active", "year": 2017 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-123.1, 49.3], [-152.0, 60.0], [-170.0, 63.7], [-175.0, 65.0], [180.0, 66.5], [170.0, 66.5], [160.0, 68.0], [145.0, 69.5], [130.0, 70.5], [105.0, 73.0], [77.5, 73.5], [60.0, 73.0], [33.0, 69.7]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "POLAR Express (Russia Arctic)", "region": "Arctic", "status": "planned", "year": 2026 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [37.6, 68.9], [55.0, 72.0], [80.0, 73.5], [110.0, 73.0], [140.0, 70.0], [160.0, 68.0], [177.0, 66.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "SEAX-1 (Southeast Asia)", "region": "Southeast Asia", "status": "active", "year": 2021 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [103.8, 1.3], [107.6, 10.8], [108.2, 16.1], [110.3, 20.5], [114.2, 22.3], [121.5, 25.0]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "India-Europe Xpress (IEX)", "region": "Indian Ocean / Med", "status": "planned", "year": 2025 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [72.9, 21.5], [63.6, 23.6], [55.3, 25.2], [44.4, 14.5], [43.2, 11.6], [38.5, 15.6], [32.3, 29.9], [32.2, 31.5], [25.4, 36.8], [12.6, 37.7], [2.2, 41.4]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "EASSy (Eastern Africa Submarine)", "region": "East Africa", "status": "active", "year": 2010 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [32.5, -25.9], [36.8, -17.9], [40.1, -11.0], [39.7, -4.0], [41.3, 2.0], [45.3, 11.5], [43.1, 11.6], [43.2, 11.7]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "SAex (South Atlantic Express)", "region": "South Atlantic", "status": "active", "year": 2012 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-43.2, -22.9], [-30.0, -20.0], [-20.0, -15.0], [-10.0, -5.0], [0.0, 5.0], [18.5, -33.9]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "RED-MED (Huawei Marine)", "region": "Red Sea", "status": "active", "year": 2020 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [36.4, 22.9], [37.1, 21.5], [38.5, 15.6], [42.6, 11.6], [43.2, 11.6], [44.5, 12.0], [50.5, 16.0], [55.0, 18.0], [58.6, 23.6]
+      ]}
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Australia–Japan Cable (AJC)", "region": "Pacific", "status": "active", "year": 2001 },
+      "geometry": { "type": "LineString", "coordinates": [
+        [151.2, -33.9], [145.0, -20.0], [133.0, -8.5], [125.0, 5.0], [121.5, 25.0], [130.0, 32.0], [135.5, 34.7]
+      ]}
+    }
+  ]
+}

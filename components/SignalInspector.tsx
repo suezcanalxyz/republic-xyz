@@ -188,6 +188,16 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                   )}
                   {signal.sourceCluster.map((s, i) => (
                     <div key={i} className={styles.evidenceItem}>
+                      {s.imageUrl && (
+                        <a href={s.url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={s.imageUrl}
+                            alt=""
+                            className={styles.evidenceThumb}
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        </a>
+                      )}
                       <div className={styles.evidenceOutlet}>{s.outlet}</div>
                       {s.title && <div className={styles.evidenceTitle}>{s.title}</div>}
                       {s.excerpt && <div className={styles.evidenceExcerpt}>{s.excerpt}</div>}

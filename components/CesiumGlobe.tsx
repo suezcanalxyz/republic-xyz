@@ -301,6 +301,44 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
     });
 
     viewerRef.current = viewer;
+
+    // ── Overlay GeoJSON layers (shipping lanes, cables, corridors) ──────────
+    // Load after viewerRef is set; non-blocking — failures are silent
+    const loadOverlays = async () => {
+      try {
+        // Shipping lanes — global commercial routes, thin maritime blue
+        const shippingDs = await C.GeoJsonDataSource.load('/data/shipping-lanes.geojson', {
+          stroke: C.Color.fromCssColorString('#57E7FF').withAlpha(0.18),
+          strokeWidth: 0.8,
+          clampToGround: false,
+        });
+        shippingDs.name = 'shipping-lanes';
+        await viewer.dataSources.add(shippingDs);
+
+        // Submarine cables — strategic infrastructure, orange
+        const cablesDs = await C.GeoJsonDataSource.load('/data/submarine-cables.geojson', {
+          stroke: C.Color.fromCssColorString('#FF8A3D').withAlpha(0.55),
+          strokeWidth: 1.4,
+          clampToGround: false,
+        });
+        cablesDs.name = 'submarine-cables';
+        await viewer.dataSources.add(cablesDs);
+
+        // Strategic corridors — BRI, Arctic routes, chokepoints, energy corridors
+        const corridorsDs = await C.GeoJsonDataSource.load('/data/strategic-corridors.geojson', {
+          stroke: C.Color.fromCssColorString('#CC66FF').withAlpha(0.45),
+          strokeWidth: 1.2,
+          clampToGround: false,
+        });
+        corridorsDs.name = 'corridors';
+        await viewer.dataSources.add(corridorsDs);
+
+        viewer.scene.requestRender();
+      } catch {
+        // overlays are cosmetic — failures don't break the globe
+      }
+    };
+    loadOverlays();
   }, [onSelect, onDeselect, onZoomChange]);
 
   useEffect(() => {
