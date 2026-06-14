@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loadSeedSignals } from '@/lib/seed';
 import { fetchGdacsSignals } from '@/lib/sources/gdacs';
+import { fetchGdeltSignals } from '@/lib/sources/gdelt';
 import { Signal, GlobeQueryParams, ClusteredSignal } from '@/lib/types';
 
 function clusterize(signals: Signal[], zoom: number): ClusteredSignal[] {
@@ -70,15 +71,18 @@ export async function GET(req: NextRequest) {
     bbox: p.get('bbox') ?? undefined,
   };
 
-  // Merge seed + live GDACS data (GDACS cached 30min server-side)
-  const [seedSignals, liveSignals] = await Promise.all([
+  // Merge seed + GDACS + GDELT live signals
+  const [seedSignals, gdacsSignals, gdeltSignals] = await Promise.all([
     Promise.resolve(loadSeedSignals()),
     fetchGdacsSignals(),
+    fetchGdeltSignals(),
   ]);
   const seedIds = new Set(seedSignals.map(s => s.id));
+  const gdacsIds = new Set(gdacsSignals.map(s => s.id));
   let signals: Signal[] = [
     ...seedSignals,
-    ...liveSignals.filter(s => !seedIds.has(s.id)),
+    ...gdacsSignals.filter(s => !seedIds.has(s.id)),
+    ...gdeltSignals.filter(s => !seedIds.has(s.id) && !gdacsIds.has(s.id)),
   ];
 
   // Mode filter — each mode surfaces a different slice of the signal graph
