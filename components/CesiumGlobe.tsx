@@ -38,9 +38,9 @@ function categoryColor(cat: string, alpha = 1) {
 }
 
 function signalSize(item: ClusteredSignal, zoom: number): number {
-  if (item.isCluster) return Math.min(10 + item.count * 0.7 + zoom * 0.5, 26);
-  if (item.seedCount > 0) return 10;
-  return 7;
+  if (item.isCluster) return Math.min(12 + item.count * 0.8 + zoom * 0.5, 28);
+  if (item.seedCount > 0) return 13;
+  return 10;
 }
 
 function cameraHeightToZoom(height: number): number {
@@ -69,16 +69,16 @@ function createHeatmapMarker(categories: string[], count: number, active: boolea
 
   const cx  = W / 2;
   const cy  = 30; // upper portion — bottom 20px is transparent padding
-  const outerR = active ? 26 : 23;
-  const innerR = 12;
+  const outerR = active ? 30 : 26;
+  const innerR = 13;
   const primaryHex = CATEGORIES[categories[0]]?.color ?? '#8899AA';
 
-  // Wide outer glow
+  // Wide outer glow — boosted for visibility at distance
   const glow = ctx.createRadialGradient(cx, cy, 1, cx, cy, outerR);
-  glow.addColorStop(0,    `${primaryHex}ee`);
-  glow.addColorStop(0.25, `${primaryHex}aa`);
-  glow.addColorStop(0.55, `${primaryHex}55`);
-  glow.addColorStop(0.82, `${primaryHex}18`);
+  glow.addColorStop(0,    `${primaryHex}ff`);
+  glow.addColorStop(0.2,  `${primaryHex}cc`);
+  glow.addColorStop(0.5,  `${primaryHex}77`);
+  glow.addColorStop(0.8,  `${primaryHex}28`);
   glow.addColorStop(1,    `${primaryHex}00`);
   ctx.fillStyle = glow;
   ctx.beginPath();
@@ -303,31 +303,40 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
     viewerRef.current = viewer;
 
     // ── Overlay GeoJSON layers (shipping lanes, cables, corridors) ──────────
-    // Load after viewerRef is set; non-blocking — failures are silent
     const loadOverlays = async () => {
       try {
-        // Shipping lanes — global commercial routes, thin maritime blue
+        // Shipping lanes — very subtle, just visible enough to read global routes
         const shippingDs = await C.GeoJsonDataSource.load('/data/shipping-lanes.geojson', {
-          stroke: C.Color.fromCssColorString('#57E7FF').withAlpha(0.18),
-          strokeWidth: 0.8,
+          stroke: C.Color.fromCssColorString('#2a5a7a').withAlpha(0.35),
+          strokeWidth: 0.6,
           clampToGround: false,
         });
         shippingDs.name = 'shipping-lanes';
         await viewer.dataSources.add(shippingDs);
 
-        // Submarine cables — strategic infrastructure, orange
+        // Submarine cables — real TeleGeography data, per-cable color from properties
         const cablesDs = await C.GeoJsonDataSource.load('/data/submarine-cables.geojson', {
-          stroke: C.Color.fromCssColorString('#FF8A3D').withAlpha(0.55),
-          strokeWidth: 1.4,
+          stroke: C.Color.fromCssColorString('#FF8A3D').withAlpha(0.5),
+          strokeWidth: 1.2,
           clampToGround: false,
         });
         cablesDs.name = 'submarine-cables';
+        // Apply per-cable color from properties.color (TeleGeography palette)
+        for (const entity of cablesDs.entities.values) {
+          const color = entity.properties?.color?.getValue?.();
+          if (color && entity.polyline) {
+            entity.polyline.material = new C.ColorMaterialProperty(
+              C.Color.fromCssColorString(color).withAlpha(0.55)
+            );
+            entity.polyline.width = new C.ConstantProperty(1.2);
+          }
+        }
         await viewer.dataSources.add(cablesDs);
 
         // Strategic corridors — BRI, Arctic routes, chokepoints, energy corridors
         const corridorsDs = await C.GeoJsonDataSource.load('/data/strategic-corridors.geojson', {
-          stroke: C.Color.fromCssColorString('#CC66FF').withAlpha(0.45),
-          strokeWidth: 1.2,
+          stroke: C.Color.fromCssColorString('#CC66FF').withAlpha(0.4),
+          strokeWidth: 1.0,
           clampToGround: false,
         });
         corridorsDs.name = 'corridors';
@@ -423,8 +432,8 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
             verticalOrigin: C.VerticalOrigin.BOTTOM,
             horizontalOrigin: C.HorizontalOrigin.CENTER,
             disableDepthTestDistance: 0,
-            scaleByDistance: new C.NearFarScalar(1e6, 0.7, 1.9e7, 0.38),
-            translucencyByDistance: new C.NearFarScalar(8e5, 1, 2.0e7, 0.88),
+            scaleByDistance: new C.NearFarScalar(8e5, 0.85, 1.9e7, 0.48),
+            translucencyByDistance: new C.NearFarScalar(6e5, 1, 2.0e7, 0.9),
           },
         });
         entitiesRef.current.set(item.id, entity);
@@ -468,13 +477,12 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
           properties: { isCluster: false, lng: item.lng, lat: item.lat },
           point: {
             pixelSize: 0, // animate in from 0
-            color: isActive ? C.Color.WHITE.withAlpha(0.95) : color,
+            color: isActive ? C.Color.WHITE.withAlpha(0.98) : color,
             outlineColor,
-            outlineWidth: isSeed ? 1.5 : 1,
-            // NO heightReference — globe depth buffer occludes back-side points
+            outlineWidth: isSeed ? 2.5 : 1.5,
             disableDepthTestDistance: 0,
-            scaleByDistance: new C.NearFarScalar(8e5, 1.6, 1.5e7, 0.65),
-            translucencyByDistance: new C.NearFarScalar(8e5, 1, 1.5e7, 0.82),
+            scaleByDistance: new C.NearFarScalar(5e5, 1.8, 1.8e7, 0.85),
+            translucencyByDistance: new C.NearFarScalar(6e5, 1, 1.8e7, 0.9),
           },
         });
         entity._isSeed = isSeed;
