@@ -4,7 +4,7 @@
   "framework": "nextjs",
   "regions": ["fra1"],
   "crons": [
-    { "path": "/api/cron/refresh", "schedule": "0 6,18 * * *" }
+    { "path": "/api/cron/refresh", "schedule": "0 6 * * *" }
   ],
   "headers": [
     {
