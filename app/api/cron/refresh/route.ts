@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     ...(gdelt.status === 'fulfilled' ? gdelt.value : []),
     ...(gdacs.status === 'fulfilled' ? gdacs.value : []),
     ...(rss.status   === 'fulfilled' ? rss.value   : []),
-    ...getGeneratedSignals(),
+    ...(await getGeneratedSignals()),
   ];
 
   const pipelineResult = await runEnrichmentPipeline(allRaw);

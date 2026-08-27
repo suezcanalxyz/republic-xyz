@@ -120,7 +120,7 @@ function toSignal(gen: GeneratedSignal, headline: RssHeadline, idx: number): Sig
 export async function runNimGenerator(headlines: RssHeadline[]): Promise<number> {
   if (!process.env.NVIDIA_NIM_API_KEY) return 0;
 
-  const existing = getCached<Signal[]>(GEN_CACHE_KEY) ?? [];
+  const existing = (await getCached<Signal[]>(GEN_CACHE_KEY)) ?? [];
   const existingUrls = new Set(existing.map(s => s.links?.[0]?.to ?? ''));
 
   const fresh = headlines.filter(h => h.url && !existingUrls.has(h.url)).slice(0, 30);
@@ -141,10 +141,10 @@ export async function runNimGenerator(headlines: RssHeadline[]): Promise<number>
 
   // Keep last 50 generated signals
   const trimmed = generated.slice(-50);
-  setCached(GEN_CACHE_KEY, trimmed, GEN_TTL_MS);
+  await setCached(GEN_CACHE_KEY, trimmed, GEN_TTL_MS);
   return count;
 }
 
-export function getGeneratedSignals(): Signal[] {
-  return getCached<Signal[]>(GEN_CACHE_KEY) ?? [];
+export async function getGeneratedSignals(): Promise<Signal[]> {
+  return (await getCached<Signal[]>(GEN_CACHE_KEY)) ?? [];
 }

@@ -26,12 +26,14 @@ interface RssSource {
 }
 
 const SOURCES: RssSource[] = [
-  { name: 'Reuters',      url: 'https://feeds.reuters.com/reuters/worldNews',         country: 'UK',  reliability: 'high',   defaultCategory: 'remote_warfare' },
-  { name: 'AP News',      url: 'https://feeds.apnews.com/apnews/World',               country: 'US',  reliability: 'high',   defaultCategory: 'remote_warfare' },
+  // Reuters (feeds.reuters.com) and AP News (feeds.apnews.com) killed their
+  // public RSS feeds years ago — both endpoints are dead (no DNS/TCP response).
   { name: 'Al Jazeera',   url: 'https://www.aljazeera.com/xml/rss/all.xml',           country: 'QA',  reliability: 'high',   defaultCategory: 'remote_warfare' },
   { name: 'UN News',      url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml', country: null, reliability: 'high', defaultCategory: 'gov_docs' },
   { name: 'BBC World',    url: 'https://feeds.bbci.co.uk/news/world/rss.xml',         country: 'UK',  reliability: 'high',   defaultCategory: 'remote_warfare' },
   { name: 'OCHA ReliefWeb', url: 'https://reliefweb.int/updates/rss.xml',             country: null,  reliability: 'high',   defaultCategory: 'migration_rescue' },
+  { name: 'The Guardian', url: 'https://www.theguardian.com/world/rss',               country: 'UK',  reliability: 'high',   defaultCategory: 'remote_warfare' },
+  { name: 'NPR World',    url: 'https://feeds.npr.org/1004/rss.xml',                  country: 'US',  reliability: 'high',   defaultCategory: 'remote_warfare' },
 ];
 
 // ─── Hotspot geocoding dictionary ────────────────────────────────────────────
@@ -230,7 +232,7 @@ async function fetchSource(src: RssSource): Promise<Signal[]> {
 }
 
 export async function fetchRssSignals(): Promise<Signal[]> {
-  const cached = getCached<Signal[]>(CACHE_KEY);
+  const cached = await getCached<Signal[]>(CACHE_KEY);
   if (cached) return cached;
 
   const results = await Promise.all(SOURCES.map(s => fetchSource(s)));
@@ -245,6 +247,6 @@ export async function fetchRssSignals(): Promise<Signal[]> {
     return true;
   });
 
-  setCached(CACHE_KEY, deduped, TTL_MS);
+  await setCached(CACHE_KEY, deduped, TTL_MS);
   return deduped;
 }

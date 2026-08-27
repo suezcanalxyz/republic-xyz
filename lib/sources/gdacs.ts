@@ -21,7 +21,7 @@ function mapCategory(t: GdacsType): string {
 }
 
 export async function fetchGdacsSignals(): Promise<Signal[]> {
-  const cached = getCached<Signal[]>(CACHE_KEY);
+  const cached = await getCached<Signal[]>(CACHE_KEY);
   if (cached) return cached;
 
   let xml: string;
@@ -109,7 +109,7 @@ export async function fetchGdacsSignals(): Promise<Signal[]> {
     });
   }
 
-  setCached(CACHE_KEY, signals, TTL_MS);
+  await setCached(CACHE_KEY, signals, TTL_MS);
 
   // Async NIM enrichment — update cache after completion, non-blocking
   enrichSignals(signals).then(enriched => {

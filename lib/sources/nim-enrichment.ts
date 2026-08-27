@@ -53,7 +53,7 @@ Respond with ONLY valid JSON matching this schema:
 
 export async function enrichSignal(signal: Signal): Promise<Signal> {
   const cacheKey = `nim:enrich:${signal.id}`;
-  const cached = getCached<EnrichmentResult>(cacheKey);
+  const cached = await getCached<EnrichmentResult>(cacheKey);
   if (cached) return applyEnrichment(signal, cached);
 
   const userPrompt = `Event: ${signal.title}
@@ -80,7 +80,7 @@ Tags: ${signal.tags.join(', ')}`;
     result.category = signal.category;
   }
 
-  setCached(cacheKey, result, ENRICH_TTL_MS);
+  await setCached(cacheKey, result, ENRICH_TTL_MS);
   return applyEnrichment(signal, result);
 }
 

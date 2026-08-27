@@ -111,7 +111,6 @@ async function fetchChannel(ch: TgChannel): Promise<Signal[]> {
         const nimResult = await nimGeocode(post.text);
         if (!nimResult || isNaN(nimResult.lat) || isNaN(nimResult.lng)) continue;
         geo = { coords: [nimResult.lng, nimResult.lat], name: nimResult.location, country: nimResult.country };
-        if (nimResult.title) title = nimResult.title;
         if (nimResult.category) category = nimResult.category;
       }
 
@@ -137,7 +136,7 @@ async function fetchChannel(ch: TgChannel): Promise<Signal[]> {
         lastUpdated: fetchedAt,
         status: 'auto_collected',
         verification: 'unverified',
-        sourceDiversity: ['telegram', ch.perspectiveGroup],
+        sourceDiversity: ['single_source'],
         sourceCluster: [{
           outlet: ch.name,
           country: null,
@@ -167,7 +166,7 @@ async function fetchChannel(ch: TgChannel): Promise<Signal[]> {
 }
 
 export async function fetchTelegramSignals(): Promise<Signal[]> {
-  const cached = getCached<Signal[]>(CACHE_KEY);
+  const cached = await getCached<Signal[]>(CACHE_KEY);
   if (cached) return cached;
 
   // Fetch channels in small batches — be gentle on t.me CDN
@@ -189,6 +188,6 @@ export async function fetchTelegramSignals(): Promise<Signal[]> {
     return true;
   });
 
-  setCached(CACHE_KEY, deduped, TTL_MS);
+  await setCached(CACHE_KEY, deduped, TTL_MS);
   return deduped;
 }

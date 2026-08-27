@@ -13,10 +13,11 @@ export async function GET(req: NextRequest) {
 
   try {
     // Merge all sources — caches warm from globe loads, no extra cost
-    const [gdelt, gdacs, rss] = await Promise.allSettled([
+    const [gdelt, gdacs, rss, nim] = await Promise.allSettled([
       fetchGdeltSignals(),
       fetchGdacsSignals(),
       fetchRssSignals(),
+      getGeneratedSignals(),
     ]);
 
     const allSignals = [
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
       ...(gdelt.status === 'fulfilled' ? gdelt.value : []),
       ...(gdacs.status === 'fulfilled' ? gdacs.value : []),
       ...(rss.status   === 'fulfilled' ? rss.value   : []),
-      ...getGeneratedSignals(),
+      ...(nim.status   === 'fulfilled' ? nim.value   : []),
     ];
 
     const results = allSignals

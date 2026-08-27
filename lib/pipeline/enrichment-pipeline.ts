@@ -84,7 +84,7 @@ export async function runEnrichmentPipeline(rawSignals: Signal[]): Promise<Signa
   const ranked = rankSignals(filtered);
 
   if (!process.env.NVIDIA_NIM_API_KEY) {
-    setCached(PIPELINE_CACHE_KEY, ranked, PIPELINE_TTL_MS);
+    await setCached(PIPELINE_CACHE_KEY, ranked, PIPELINE_TTL_MS);
     return ranked;
   }
 
@@ -104,6 +104,6 @@ export async function runEnrichmentPipeline(rawSignals: Signal[]): Promise<Signa
 
   // Re-rank after enrichment (scores may have changed)
   const final = rankSignals([...enriched, ...rest]);
-  setCached(PIPELINE_CACHE_KEY, final, PIPELINE_TTL_MS);
+  await setCached(PIPELINE_CACHE_KEY, final, PIPELINE_TTL_MS);
   return final;
 }

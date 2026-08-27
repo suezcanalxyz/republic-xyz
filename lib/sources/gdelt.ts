@@ -153,7 +153,7 @@ async function fetchCategory(
 }
 
 export async function fetchGdeltSignals(): Promise<Signal[]> {
-  const cached = getCached<Signal[]>(CACHE_KEY);
+  const cached = await getCached<Signal[]>(CACHE_KEY);
   if (cached) return cached;
 
   // Parallel fetch all themes
@@ -175,6 +175,6 @@ export async function fetchGdeltSignals(): Promise<Signal[]> {
     }
   }
 
-  setCached(CACHE_KEY, deduped, TTL_MS);
+  await setCached(CACHE_KEY, deduped, TTL_MS);
   return deduped;
 }

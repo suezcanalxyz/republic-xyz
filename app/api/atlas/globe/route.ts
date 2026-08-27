@@ -78,19 +78,19 @@ export async function GET(req: NextRequest) {
 
   // Use pipeline cache when warm (populated by cron enrichment run)
   // Fall back to raw merge + deterministic ranking when cache is cold
-  const pipelineCached = getCached<Signal[]>(PIPELINE_CACHE_KEY);
+  const pipelineCached = await getCached<Signal[]>(PIPELINE_CACHE_KEY);
 
   let signals: Signal[];
   if (pipelineCached) {
     signals = pipelineCached;
   } else {
-    const [seedSignals, gdacsSignals, gdeltSignals, rssSignals] = await Promise.all([
+    const [seedSignals, gdacsSignals, gdeltSignals, rssSignals, nimSignals] = await Promise.all([
       Promise.resolve(loadSeedSignals()),
       fetchGdacsSignals(),
       fetchGdeltSignals(),
       fetchRssSignals(),
+      getGeneratedSignals(),
     ]);
-    const nimSignals = getGeneratedSignals();
     const seedIds = new Set(seedSignals.map(s => s.id));
     const liveIds = new Set([...gdacsSignals, ...gdeltSignals, ...rssSignals].map(s => s.id));
     const merged: Signal[] = [

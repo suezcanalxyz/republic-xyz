@@ -411,6 +411,20 @@ model AuditLog {
   @@index([entityType, entityId])
 }
 
+// ─── Pipeline cache (cron → public API handoff) ────────────────────────────
+// Persistent replacement for in-memory caching: Vercel serverless invocations
+// don't share memory, so the cron run and the public route must hand data
+// off through the DB, not a process-local Map.
+
+model CacheEntry {
+  key       String   @id
+  data      Json
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
 // ─── Community Submissions (future) ────────────────────────────────────────
 
 model CommunitySubmission {
