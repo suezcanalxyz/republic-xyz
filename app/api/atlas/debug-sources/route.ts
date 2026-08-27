@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { fetchRssSignals } from '@/lib/sources/rss-news';
+import { fetchGdeltSignals } from '@/lib/sources/gdelt';
 
 /**
  * Temporary diagnostic endpoint — reports raw fetch status per external
@@ -43,10 +45,38 @@ export async function GET() {
     probe('gdacs', 'https://www.gdacs.org/xml/rss.xml'),
   ]);
 
+  let rssPipeline: { count: number; error: string | null; ms: number };
+  const rssStart = Date.now();
+  try {
+    const signals = await fetchRssSignals();
+    rssPipeline = { count: signals.length, error: null, ms: Date.now() - rssStart };
+  } catch (err) {
+    rssPipeline = {
+      count: 0,
+      error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+      ms: Date.now() - rssStart,
+    };
+  }
+
+  let gdeltPipeline: { count: number; error: string | null; ms: number };
+  const gdeltStart = Date.now();
+  try {
+    const signals = await fetchGdeltSignals();
+    gdeltPipeline = { count: signals.length, error: null, ms: Date.now() - gdeltStart };
+  } catch (err) {
+    gdeltPipeline = {
+      count: 0,
+      error: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+      ms: Date.now() - gdeltStart,
+    };
+  }
+
   return NextResponse.json({
     results,
     hasNimKey: !!process.env.NVIDIA_NIM_API_KEY,
     hasGroqKey: !!process.env.GROQ_API_KEY,
+    rssPipeline,
+    gdeltPipeline,
     ts: new Date().toISOString(),
   });
 }
