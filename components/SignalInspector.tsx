@@ -26,6 +26,7 @@ export default function SignalInspector({ signalId, onClose }: Props) {
   const [related, setRelated] = useState<Signal[]>([]);
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [intel, setIntel] = useState<IntelResult | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
   const [intelError, setIntelError] = useState<string | null>(null);
@@ -57,13 +58,17 @@ export default function SignalInspector({ signalId, onClose }: Props) {
   };
 
   useEffect(() => {
-    if (!signalId) { setSignal(null); setRelated([]); setIntel(null); return; }
+    if (!signalId) { setSignal(null); setRelated([]); setIntel(null); setFetchError(false); return; }
     setLoading(true);
+    setFetchError(false);
     setTab('overview');
-    fetch(`/api/atlas/signal/${signalId}`)
-      .then(r => r.json())
-      .then(d => { setSignal(d.signal); setRelated(d.related ?? []); })
-      .catch(() => setSignal(null))
+    fetch(`/api/atlas/signal/${encodeURIComponent(signalId)}`)
+      .then(async r => {
+        const d = await r.json();
+        if (!r.ok || !d.signal) { setFetchError(true); setSignal(null); }
+        else { setSignal(d.signal); setRelated(d.related ?? []); }
+      })
+      .catch(() => { setSignal(null); setFetchError(true); })
       .finally(() => setLoading(false));
   }, [signalId]);
 
@@ -90,6 +95,12 @@ export default function SignalInspector({ signalId, onClose }: Props) {
 
       {loading && <div className={styles.loading}>loading…</div>}
 
+      {fetchError && !loading && (
+        <div className={styles.body} style={{ paddingTop: 24 }}>
+          <p className={styles.empty}>Signal not found. It may have been archived or the ID is invalid.</p>
+        </div>
+      )}
+
       {signal && !loading && (
         <>
           <div className={styles.titleBlock}>
@@ -106,6 +117,18 @@ export default function SignalInspector({ signalId, onClose }: Props) {
               <span className={`${styles.verification} ${styles[signal.verification]}`}>
                 {signal.verification.replace(/_/g, ' ')}
               </span>
+              {signal.status && (
+                <>
+                  <span className={styles.sep}>·</span>
+                  <span style={{ opacity: 0.5 }}>{signal.status.replace(/_/g, ' ')}</span>
+                </>
+              )}
+              {signal.lastUpdated && signal.lastUpdated !== signal.date && (
+                <>
+                  <span className={styles.sep}>·</span>
+                  <span style={{ opacity: 0.4 }}>upd {signal.lastUpdated.slice(0, 10)}</span>
+                </>
+              )}
             </div>
           </div>
 

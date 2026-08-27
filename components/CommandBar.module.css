@@ -232,6 +232,19 @@
 .layerAbbr { color: inherit; font-size: 9px; letter-spacing: 0.12em; width: 32px; flex-shrink: 0; }
 .layerLabel { color: inherit; font-size: 10px; }
 
+.layerSep {
+  height: 1px;
+  background: #0f2035;
+  margin: 4px 0;
+}
+.layerSepLabel {
+  padding: 6px 10px 3px;
+  color: #2a4a60;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .loginBtn {
   height: 32px;
   min-width: 44px;

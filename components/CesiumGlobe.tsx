@@ -13,6 +13,7 @@ interface Props {
   signals: ClusteredSignal[];
   activeSignalId: string | null;
   showSatellite: boolean;
+  overlayLayers: Set<string>;
   onSelect: (id: string) => void;
   onDeselect: () => void;
   onZoomChange: (zoom: number) => void;
@@ -145,7 +146,7 @@ function createHeatmapMarker(categories: string[], count: number, active: boolea
   return canvas.toDataURL('image/png');
 }
 
-export default function CesiumGlobe({ signals, activeSignalId, showSatellite, onSelect, onDeselect, onZoomChange }: Props) {
+export default function CesiumGlobe({ signals, activeSignalId, showSatellite, overlayLayers, onSelect, onDeselect, onZoomChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const viewerRef = useRef<any>(null);
@@ -161,10 +162,24 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
   const satelliteLayerRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const politicalLayerRef = useRef<any>(null);
+  // ── Overlay layer refs ────────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cablesDsRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const shippingDsRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const corridorsDsRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const satOrbitEntitiesRef = useRef<any[]>([]);
+  // Keep a ref to latest overlayLayers so loadOverlays can read current value
+  const overlayLayersRef = useRef<Set<string>>(overlayLayers);
   const zoomRef = useRef(2);
   const markerCacheRef = useRef<Map<string, string>>(new Map());
   const prevSizesRef = useRef<Map<string, number>>(new Map());
   const transitionRef = useRef<{ startTime: number; items: TransitionItem[] } | null>(null);
+
+  // Sync overlayLayersRef with prop so loadOverlays can read current value after async load
+  useEffect(() => { overlayLayersRef.current = overlayLayers; }, [overlayLayers]);
 
   const sortedSignals = useMemo(
     () => [...signals].sort((a, b) => Number(b.isCluster) - Number(a.isCluster) || b.count - a.count),
@@ -228,39 +243,28 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
     viewer.scene.requestRenderMode = true;
     viewer.scene.maximumRenderTimeChange = isMobile ? 0.5 : 0.35;
 
-    // Per-frame interpolator for smooth zoom/data transitions + seed pulse
+    // Per-frame interpolator for smooth entry transitions only.
+    // Seed pulse handled via CallbackProperty at entity creation — no per-frame allocation.
     viewer.scene.preUpdate.addEventListener(() => {
       const transition = transitionRef.current;
-      const hasPulse = [...entitiesRef.current.values()].some(e => e.point && e._isSeed);
+      if (!transition) return; // early exit — no animation, no cost
 
-      if (transition) {
-        const t = Math.min(1, (Date.now() - transition.startTime) / 380);
-        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      const t = Math.min(1, (Date.now() - transition.startTime) / 380);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
 
-        for (const { id, fromSize, toSize, isCluster } of transition.items) {
-          const entity = entitiesRef.current.get(id);
-          if (!entity) continue;
-          const size = fromSize + (toSize - fromSize) * eased;
-          if (!isCluster && entity.point) {
-            entity.point.pixelSize = new C.ConstantProperty(size);
-          } else if (isCluster && entity.billboard) {
-            entity.billboard.scale = new C.ConstantProperty(size / 28);
-          }
-        }
-
-        if (t >= 1) transitionRef.current = null;
-      }
-
-      // Gentle pulse on seed-type points (breathing: 2.4s period)
-      if (hasPulse) {
-        const pulse = (Math.sin(Date.now() / 1200) + 1) / 2; // 0→1→0
-        for (const [, entity] of entitiesRef.current) {
-          if (!entity.point || !entity._isSeed) continue;
-          entity.point.outlineWidth = new C.ConstantProperty(1.5 + pulse * 2);
+      for (const { id, fromSize, toSize, isCluster } of transition.items) {
+        const entity = entitiesRef.current.get(id);
+        if (!entity) continue;
+        const size = fromSize + (toSize - fromSize) * eased;
+        if (!isCluster && entity.point) {
+          entity.point.pixelSize = new C.ConstantProperty(size);
+        } else if (isCluster && entity.billboard) {
+          entity.billboard.scale = new C.ConstantProperty(size / 28);
         }
       }
 
-      if (transition || hasPulse) viewer.scene.requestRender();
+      if (t >= 1) transitionRef.current = null;
+      viewer.scene.requestRender();
     });
 
     const handler = new C.ScreenSpaceEventHandler(viewer.scene.canvas);
@@ -302,6 +306,53 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
 
     viewerRef.current = viewer;
 
+    // ── Satellite orbital rings ───────────────────────────────────────────────
+    const addSatelliteOrbits = () => {
+      const RE = 6_371_000;
+      // Each entry: altitude(m), inclination(°), RAAN planes(°), color, line width
+      const ORBITS = [
+        { alt: 408_000,    inc: 51.6, planes: [0],              color: '#9AA7FF', w: 1.2 }, // ISS
+        { alt: 550_000,    inc: 53,   planes: [0, 45, 90, 135], color: '#57E7FF', w: 0.7 }, // Starlink LEO
+        { alt: 20_200_000, inc: 55,   planes: [0, 60, 120],     color: '#6FE3A5', w: 0.9 }, // GPS MEO
+        { alt: 35_786_000, inc: 0,    planes: [0],              color: '#FFC857', w: 1.5 }, // GEO belt
+      ];
+
+      const entities: unknown[] = [];
+      for (const orbit of ORBITS) {
+        const R = RE + orbit.alt;
+        for (const raan of orbit.planes) {
+          const raanRad = raan * Math.PI / 180;
+          const incRad  = orbit.inc * Math.PI / 180;
+          const positions = [];
+          for (let deg = 0; deg <= 360; deg += 2) {
+            const θ = deg * Math.PI / 180;
+            // Orbital mechanics: position in ECEF given RAAN and inclination
+            const x = R * (Math.cos(raanRad) * Math.cos(θ) - Math.sin(raanRad) * Math.sin(θ) * Math.cos(incRad));
+            const y = R * (Math.sin(raanRad) * Math.cos(θ) + Math.cos(raanRad) * Math.sin(θ) * Math.cos(incRad));
+            const z = R * Math.sin(θ) * Math.sin(incRad);
+            positions.push(new C.Cartesian3(x, y, z));
+          }
+          const entity = viewer.entities.add({
+            polyline: {
+              positions,
+              width: orbit.w,
+              arcType: C.ArcType.NONE, // straight 3D lines in space, not geodesic
+              material: new C.PolylineGlowMaterialProperty({
+                glowPower: 0.15,
+                color: C.Color.fromCssColorString(orbit.color).withAlpha(0.35),
+              }),
+            },
+          });
+          entity._satOrbit = true;
+          entities.push(entity);
+        }
+      }
+      satOrbitEntitiesRef.current = entities as never[];
+      // Apply initial visibility
+      const visible = overlayLayersRef.current.has('satellites');
+      for (const e of satOrbitEntitiesRef.current) (e as { show: boolean }).show = visible;
+    };
+
     // ── Overlay GeoJSON layers (shipping lanes, cables, corridors) ──────────
     const loadOverlays = async () => {
       try {
@@ -313,6 +364,8 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
         });
         shippingDs.name = 'shipping-lanes';
         await viewer.dataSources.add(shippingDs);
+        shippingDsRef.current = shippingDs;
+        shippingDs.show = overlayLayersRef.current.has('shipping');
 
         // Submarine cables — real TeleGeography data, per-cable color from properties
         const cablesDs = await C.GeoJsonDataSource.load('/data/submarine-cables.geojson', {
@@ -321,7 +374,6 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
           clampToGround: false,
         });
         cablesDs.name = 'submarine-cables';
-        // Apply per-cable color from properties.color (TeleGeography palette)
         for (const entity of cablesDs.entities.values) {
           const color = entity.properties?.color?.getValue?.();
           if (color && entity.polyline) {
@@ -332,6 +384,8 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
           }
         }
         await viewer.dataSources.add(cablesDs);
+        cablesDsRef.current = cablesDs;
+        cablesDs.show = overlayLayersRef.current.has('cables');
 
         // Strategic corridors — BRI, Arctic routes, chokepoints, energy corridors
         const corridorsDs = await C.GeoJsonDataSource.load('/data/strategic-corridors.geojson', {
@@ -341,12 +395,15 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
         });
         corridorsDs.name = 'corridors';
         await viewer.dataSources.add(corridorsDs);
+        corridorsDsRef.current = corridorsDs;
+        corridorsDs.show = overlayLayersRef.current.has('corridors');
 
         viewer.scene.requestRender();
       } catch {
         // overlays are cosmetic — failures don't break the globe
       }
     };
+    addSatelliteOrbits();
     loadOverlays();
   }, [onSelect, onDeselect, onZoomChange]);
 
@@ -373,9 +430,10 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
       setTimeout(() => { if (viewerRef.current) viewerRef.current.scene.globe.atmosphereLightIntensity = base; }, 650);
     }
 
-    // Remove stale signal entities + their pulse rings
+    // Remove stale signal entities + their pulse rings — O(n) with Set
+    const signalIdSet = new Set(signals.map(s => s.id));
     for (const [id, entity] of entitiesRef.current) {
-      if (!signals.find(s => s.id === id)) {
+      if (!signalIdSet.has(id)) {
         viewer.entities.remove(entity);
         entitiesRef.current.delete(id);
         prevSizesRef.current.delete(id);
@@ -392,8 +450,9 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
       const isSeed = item.seedCount > 0;
       // Cache key includes all categories so multi-cat clusters render correctly
       const cacheKey = `${item.categories.slice(0, 3).join(',')}:${item.count}:${isActive ? 'a' : 'i'}`;
-      // +100m above ellipsoid surface to avoid z-fighting, enables proper globe depth occlusion
-      const position = C.Cartesian3.fromDegrees(item.lng, item.lat, 100);
+      // 15km above ellipsoid: above any terrain tessellation → no z-fighting.
+      // Globe sphere still occludes far-side points via standard depth buffer.
+      const position = C.Cartesian3.fromDegrees(item.lng, item.lat, 15_000);
 
       const existing = entitiesRef.current.get(item.id);
       if (existing) {
@@ -404,6 +463,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
         existing.position = new C.ConstantPositionProperty(position);
         if (existing.billboard && item.isCluster) {
           if (!markerCacheRef.current.has(cacheKey)) {
+            if (markerCacheRef.current.size > 120) markerCacheRef.current.clear();
             markerCacheRef.current.set(cacheKey, createHeatmapMarker(item.categories, item.count, isActive));
           }
           existing.billboard.image = new C.ConstantProperty(markerCacheRef.current.get(cacheKey));
@@ -418,6 +478,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
 
       if (item.isCluster) {
         if (!markerCacheRef.current.has(cacheKey)) {
+          if (markerCacheRef.current.size > 120) markerCacheRef.current.clear();
           markerCacheRef.current.set(cacheKey, createHeatmapMarker(item.categories, item.count, isActive));
         }
 
@@ -447,7 +508,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
           const idHash = item.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
           const phase = (idHash % 100) / 100;
           const pulseEnt = viewer.entities.add({
-            position: C.Cartesian3.fromDegrees(item.lng, item.lat, 500),
+            position: C.Cartesian3.fromDegrees(item.lng, item.lat, 15_000),
             ellipse: {
               semiMajorAxis: new C.CallbackProperty(() => {
                 return (((Date.now() / 3500) + phase) % 1) * 420000;
@@ -455,7 +516,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
               semiMinorAxis: new C.CallbackProperty(() => {
                 return (((Date.now() / 3500) + phase) % 1) * 420000;
               }, false),
-              height: 500,
+              height: 15_000,
               material: new C.ColorMaterialProperty(new C.CallbackProperty(() => {
                 const t = ((Date.now() / 3500) + phase) % 1;
                 return C.Color.fromCssColorString(hex).withAlpha((1 - t) * 0.22);
@@ -479,7 +540,10 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
             pixelSize: 0, // animate in from 0
             color: isActive ? C.Color.WHITE.withAlpha(0.98) : color,
             outlineColor,
-            outlineWidth: isSeed ? 2.5 : 1.5,
+            // Seed entities: breathing pulse via CallbackProperty (no preUpdate loop needed)
+            outlineWidth: isSeed
+              ? new C.CallbackProperty(() => 1.5 + ((Math.sin(Date.now() / 1200) + 1) / 2) * 2, false)
+              : 1.5,
             disableDepthTestDistance: 0,
             scaleByDistance: new C.NearFarScalar(5e5, 1.8, 1.8e7, 0.85),
             translucencyByDistance: new C.NearFarScalar(6e5, 1, 1.8e7, 0.9),
@@ -552,6 +616,16 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
     viewer.scene.requestRender();
   }, [activeSignalId, signals]);
 
+  // Toggle overlay layer visibility when overlayLayers prop changes
+  useEffect(() => {
+    if (shippingDsRef.current)  shippingDsRef.current.show  = overlayLayers.has('shipping');
+    if (cablesDsRef.current)    cablesDsRef.current.show    = overlayLayers.has('cables');
+    if (corridorsDsRef.current) corridorsDsRef.current.show = overlayLayers.has('corridors');
+    const satVisible = overlayLayers.has('satellites');
+    for (const e of satOrbitEntitiesRef.current) (e as { show: boolean }).show = satVisible;
+    viewerRef.current?.scene.requestRender();
+  }, [overlayLayers]);
+
   // Swap between political basemap and satellite imagery
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -587,6 +661,10 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, on
       cesiumRef.current = null;
       satelliteLayerRef.current = null;
       politicalLayerRef.current = null;
+      cablesDsRef.current = null;
+      shippingDsRef.current = null;
+      corridorsDsRef.current = null;
+      satOrbitEntitiesRef.current = [];
       pulseEntitiesRef.current.clear();
       arcEntitiesRef.current = [];
     };

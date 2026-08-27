@@ -48,7 +48,7 @@ const CesiumGlobe = dynamic(() => import('@/components/CesiumGlobe'), {
   loading: () => <GlobeLoader />,
 });
 
-const LIVE_INTERVAL_MS = 30_000;
+const LIVE_INTERVAL_MS = 30 * 60 * 1000; // 30 min — caches last 1-2h, no point hitting API faster
 
 export default function AtlasPage() {
   const [signals, setSignals] = useState<ClusteredSignal[]>([]);
@@ -56,6 +56,9 @@ export default function AtlasPage() {
   const [mode, setMode] = useState<Mode>('event');
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set());
+  const [overlayLayers, setOverlayLayers] = useState<Set<string>>(
+    new Set(['cables', 'shipping', 'corridors', 'satellites'])
+  );
   const [zoom, setZoom] = useState(2);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [liveActive, setLiveActive] = useState(false);
@@ -113,6 +116,14 @@ export default function AtlasPage() {
     });
   }, []);
 
+  const handleOverlayLayerToggle = useCallback((layer: string) => {
+    setOverlayLayers(prev => {
+      const next = new Set(prev);
+      if (next.has(layer)) next.delete(layer); else next.add(layer);
+      return next;
+    });
+  }, []);
+
   const formattedTime = lastFetched
     ? lastFetched.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : null;
@@ -123,9 +134,11 @@ export default function AtlasPage() {
         mode={mode}
         timeWindow={timeWindow}
         activeLayers={activeLayers}
+        overlayLayers={overlayLayers}
         onModeChange={setMode}
         onTimeWindowChange={setTimeWindow}
         onLayerToggle={handleLayerToggle}
+        onOverlayLayerToggle={handleOverlayLayerToggle}
         onSearchSelect={setActiveSignalId}
       />
 
@@ -134,6 +147,7 @@ export default function AtlasPage() {
           signals={signals}
           activeSignalId={activeSignalId}
           showSatellite={satellite}
+          overlayLayers={overlayLayers}
           onSelect={setActiveSignalId}
           onDeselect={() => setActiveSignalId(null)}
           onZoomChange={setZoom}

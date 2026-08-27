@@ -1,0 +1,35 @@
+[Unit]
+Description=ATLAS — republic.suezcanal.xyz (Next.js standalone)
+Documentation=https://github.com/suezcanalxyz/republic-xyz
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+
+WorkingDirectory=/home/ubuntu/atlas/.next/standalone
+
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=HOSTNAME=127.0.0.1
+
+EnvironmentFile=/etc/atlas.env
+
+ExecStart=/usr/bin/node server.js
+
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=120
+StartLimitBurst=5
+
+MemoryMax=1024M
+MemorySwapMax=0
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=atlas
+
+[Install]
+WantedBy=multi-user.target

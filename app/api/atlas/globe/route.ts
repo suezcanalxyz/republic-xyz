@@ -4,6 +4,9 @@ import { fetchGdacsSignals } from '@/lib/sources/gdacs';
 import { fetchGdeltSignals } from '@/lib/sources/gdelt';
 import { fetchRssSignals } from '@/lib/sources/rss-news';
 import { getGeneratedSignals } from '@/lib/sources/nim-generator';
+import { rankSignals, filterSignals } from '@/lib/sources/signal-ranker';
+import { getCached } from '@/lib/cache';
+import { PIPELINE_CACHE_KEY } from '@/lib/pipeline/enrichment-pipeline';
 import { Signal, GlobeQueryParams, ClusteredSignal } from '@/lib/types';
 
 function clusterize(signals: Signal[], zoom: number): ClusteredSignal[] {
@@ -73,23 +76,32 @@ export async function GET(req: NextRequest) {
     bbox: p.get('bbox') ?? undefined,
   };
 
-  // Merge seed + GDACS + GDELT + RSS + NIM-generated signals
-  const [seedSignals, gdacsSignals, gdeltSignals, rssSignals] = await Promise.all([
-    Promise.resolve(loadSeedSignals()),
-    fetchGdacsSignals(),
-    fetchGdeltSignals(),
-    fetchRssSignals(),
-  ]);
-  const nimSignals = getGeneratedSignals();
-  const seedIds = new Set(seedSignals.map(s => s.id));
-  const liveIds = new Set([...gdacsSignals, ...gdeltSignals, ...rssSignals].map(s => s.id));
-  let signals: Signal[] = [
-    ...seedSignals,
-    ...gdacsSignals.filter(s => !seedIds.has(s.id)),
-    ...gdeltSignals.filter(s => !seedIds.has(s.id)),
-    ...rssSignals.filter(s => !seedIds.has(s.id) && !liveIds.has(s.id)),
-    ...nimSignals.filter(s => !seedIds.has(s.id) && !liveIds.has(s.id)),
-  ];
+  // Use pipeline cache when warm (populated by cron enrichment run)
+  // Fall back to raw merge + deterministic ranking when cache is cold
+  const pipelineCached = getCached<Signal[]>(PIPELINE_CACHE_KEY);
+
+  let signals: Signal[];
+  if (pipelineCached) {
+    signals = pipelineCached;
+  } else {
+    const [seedSignals, gdacsSignals, gdeltSignals, rssSignals] = await Promise.all([
+      Promise.resolve(loadSeedSignals()),
+      fetchGdacsSignals(),
+      fetchGdeltSignals(),
+      fetchRssSignals(),
+    ]);
+    const nimSignals = getGeneratedSignals();
+    const seedIds = new Set(seedSignals.map(s => s.id));
+    const liveIds = new Set([...gdacsSignals, ...gdeltSignals, ...rssSignals].map(s => s.id));
+    const merged: Signal[] = [
+      ...seedSignals,
+      ...gdacsSignals.filter(s => !seedIds.has(s.id)),
+      ...gdeltSignals.filter(s => !seedIds.has(s.id)),
+      ...rssSignals.filter(s => !seedIds.has(s.id) && !liveIds.has(s.id)),
+      ...nimSignals.filter(s => !seedIds.has(s.id) && !liveIds.has(s.id)),
+    ];
+    signals = rankSignals(filterSignals(merged));
+  }
 
   // Mode filter — each mode surfaces a different slice of the signal graph
   if (params.mode && params.mode !== 'event') {

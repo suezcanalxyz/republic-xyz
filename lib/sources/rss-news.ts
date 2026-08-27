@@ -13,7 +13,7 @@ import { getCached, setCached } from '../cache';
 import { nimChat, extractJson } from '../nim';
 
 const CACHE_KEY = 'rss:news:v2';
-const TTL_MS = 20 * 60 * 1000; // 20 min
+const TTL_MS = 60 * 60 * 1000; // 1h — balanced freshness vs fetch cost
 
 // ─── RSS source definitions ───────────────────────────────────────────────────
 
@@ -179,6 +179,7 @@ async function fetchSource(src: RssSource): Promise<Signal[]> {
     const date = item.pubDate
       ? new Date(item.pubDate).toISOString().slice(0, 10)
       : new Date().toISOString().slice(0, 10);
+    const fetchedAt = new Date().toISOString().slice(0, 10);
 
     const id = `rss:${src.name.replace(/\s/g, '')}:${Buffer.from(item.url).toString('base64').slice(0, 16)}`;
 
@@ -198,7 +199,7 @@ async function fetchSource(src: RssSource): Promise<Signal[]> {
         confidence: 'medium',
       },
       date,
-      lastUpdated: date,
+      lastUpdated: fetchedAt,
       status: 'auto_collected',
       verification: 'partly_verified',
       sourceDiversity: ['single_source'],

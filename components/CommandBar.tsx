@@ -20,11 +20,20 @@ interface Props {
   mode: Mode;
   timeWindow: TimeWindow;
   activeLayers: Set<string>;
+  overlayLayers: Set<string>;
   onModeChange: (m: Mode) => void;
   onTimeWindowChange: (t: TimeWindow) => void;
   onLayerToggle: (layer: string) => void;
+  onOverlayLayerToggle: (layer: string) => void;
   onSearchSelect: (id: string) => void;
 }
+
+const MAP_OVERLAYS: { id: string; label: string; abbr: string; color: string }[] = [
+  { id: 'cables',     label: 'Sub. Cables',    abbr: 'CABL', color: '#FF8A3D' },
+  { id: 'shipping',   label: 'Shipping Lanes', abbr: 'SHIP', color: '#2a8ab5' },
+  { id: 'corridors',  label: 'Corridors',      abbr: 'CORR', color: '#CC66FF' },
+  { id: 'satellites', label: 'Orbits',         abbr: 'ORBT', color: '#9AA7FF' },
+];
 
 const MODES: { id: Mode; label: string }[] = [
   { id: 'event', label: 'Event' },
@@ -44,8 +53,8 @@ const TIME_WINDOWS: { id: TimeWindow; label: string }[] = [
 ];
 
 export default function CommandBar({
-  mode, timeWindow, activeLayers,
-  onModeChange, onTimeWindowChange, onLayerToggle, onSearchSelect,
+  mode, timeWindow, activeLayers, overlayLayers,
+  onModeChange, onTimeWindowChange, onLayerToggle, onOverlayLayerToggle, onSearchSelect,
 }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -143,12 +152,21 @@ export default function CommandBar({
         {showLayers && (
           <div className={styles.layersPanel}>
             <div className={styles.layersPanelHead}>
-              <span>Layer filter</span>
+              <span>Signal filters</span>
               <button
                 className={styles.layersClear}
-                onClick={() => Object.keys(CATEGORIES).forEach(onLayerToggle)}
+                onClick={() => {
+                  const allKeys = Object.keys(CATEGORIES);
+                  if (activeLayers.size === allKeys.length) {
+                    // all active → deactivate all
+                    allKeys.forEach(onLayerToggle);
+                  } else {
+                    // activate only missing layers
+                    allKeys.filter(k => !activeLayers.has(k)).forEach(onLayerToggle);
+                  }
+                }}
               >
-                all
+                {activeLayers.size === Object.keys(CATEGORIES).length ? 'none' : 'all'}
               </button>
             </div>
             {Object.entries(CATEGORIES).map(([id, cat]) => (
@@ -160,6 +178,20 @@ export default function CommandBar({
                 <span className={styles.layerDot} style={{ background: cat.color }} />
                 <span className={styles.layerAbbr}>{cat.abbr}</span>
                 <span className={styles.layerLabel}>{cat.label}</span>
+              </button>
+            ))}
+
+            <div className={styles.layerSep} />
+            <div className={styles.layerSepLabel}>Map overlays</div>
+            {MAP_OVERLAYS.map(ov => (
+              <button
+                key={ov.id}
+                className={`${styles.layerItem} ${overlayLayers.has(ov.id) ? styles.layerOn : ''}`}
+                onClick={() => onOverlayLayerToggle(ov.id)}
+              >
+                <span className={styles.layerDot} style={{ background: ov.color }} />
+                <span className={styles.layerAbbr}>{ov.abbr}</span>
+                <span className={styles.layerLabel}>{ov.label}</span>
               </button>
             ))}
           </div>

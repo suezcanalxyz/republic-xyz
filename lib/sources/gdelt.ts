@@ -11,7 +11,7 @@ import type { Signal, VerificationStatus } from '../types';
 import { getCached, setCached } from '../cache';
 
 const CACHE_KEY = 'gdelt:live';
-const TTL_MS = 15 * 60 * 1000; // 15 min — GDELT updates every 15min
+const TTL_MS = 2 * 60 * 60 * 1000; // 2h — 18 parallel queries, expensive; cron pre-warms at 06:00 + 18:00 UTC
 const TIMESPAN = 20160; // minutes = 14 days
 
 // Themes → ATLAS category mapping
@@ -104,6 +104,7 @@ async function fetchCategory(
         const tone = p.avgTone;
         const imageUrl = p.shareimage ?? null;
 
+        const fetchedAt = new Date().toISOString().slice(0, 10);
         return {
           id: `gdelt:${category}:${Math.abs(lng * 100).toFixed(0)}:${Math.abs(lat * 100).toFixed(0)}:${date}:${i}`,
           type: 'SHORT_ALERT',
@@ -120,7 +121,7 @@ async function fetchCategory(
             confidence: 'medium',
           },
           date,
-          lastUpdated: date,
+          lastUpdated: fetchedAt,
           status: 'auto_collected',
           verification: toneToVerification(tone),
           sourceDiversity: ['single_source'],

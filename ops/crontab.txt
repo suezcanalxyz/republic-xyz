@@ -1,0 +1,11 @@
+# ATLAS cron entries — APPEND to existing crontab, do NOT replace
+# Usage: crontab -e  → add these lines at the bottom
+# WARNING: this VM also runs SeaCommons — keep existing entries
+
+SHELL=/bin/bash
+
+# ATLAS: warm caches + enrichment pipeline — 06:00 and 18:00 UTC
+0 6,18 * * * source /etc/atlas.env && curl -sf -H "Authorization: Bearer ${CRON_SECRET}" http://127.0.0.1:3001/api/cron/refresh >> /var/log/atlas-cron.log 2>&1
+
+# Keep log under control
+30 6 * * * tail -n 500 /var/log/atlas-cron.log > /tmp/atlas-cron.tmp && mv /tmp/atlas-cron.tmp /var/log/atlas-cron.log
