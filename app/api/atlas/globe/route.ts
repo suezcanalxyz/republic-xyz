@@ -92,13 +92,16 @@ export async function GET(req: NextRequest) {
       getGeneratedSignals(),
     ]);
     const seedIds = new Set(seedSignals.map(s => s.id));
-    const liveIds = new Set([...gdacsSignals, ...gdeltSignals, ...rssSignals].map(s => s.id));
+    // Each dedup set only covers *higher-priority* sources already merged in —
+    // must not include the source being filtered against itself.
+    const gdeltGdacsIds = new Set([...gdacsSignals, ...gdeltSignals].map(s => s.id));
+    const allLiveIds = new Set([...gdeltGdacsIds, ...rssSignals.map(s => s.id)]);
     const merged: Signal[] = [
       ...seedSignals,
       ...gdacsSignals.filter(s => !seedIds.has(s.id)),
       ...gdeltSignals.filter(s => !seedIds.has(s.id)),
-      ...rssSignals.filter(s => !seedIds.has(s.id) && !liveIds.has(s.id)),
-      ...nimSignals.filter(s => !seedIds.has(s.id) && !liveIds.has(s.id)),
+      ...rssSignals.filter(s => !seedIds.has(s.id) && !gdeltGdacsIds.has(s.id)),
+      ...nimSignals.filter(s => !seedIds.has(s.id) && !allLiveIds.has(s.id)),
     ];
     signals = rankSignals(filterSignals(merged));
   }
