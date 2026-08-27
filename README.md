@@ -1,6 +1,11 @@
 # ATLAS
 
-Real-time geopolitical intelligence platform: a 3D globe (CesiumJS) plotting live signals — GDELT news events, RSS feeds, submarine cable infrastructure, conflict/geo hotspots — scored, deduplicated and enriched by an LLM pipeline, served through Next.js and refreshed on a cron schedule.
+[![Live](https://img.shields.io/badge/live-republic.suezcanal.xyz-2ea44f)](https://republic.suezcanal.xyz)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
+Built to answer a simple question fast: what's happening on the planet right now, and how corroborated is it? ATLAS pulls live signals onto a 3D globe (CesiumJS) — GDELT news events, RSS feeds, submarine cable infrastructure, conflict/geo hotspots — scores and deduplicates them deterministically, then spends LLM budget only on the signals worth enriching.
 
 **[republic.suezcanal.xyz](https://republic.suezcanal.xyz)**
 
