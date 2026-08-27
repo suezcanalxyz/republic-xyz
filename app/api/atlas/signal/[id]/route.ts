@@ -4,6 +4,8 @@ import { fetchGdeltSignals } from '@/lib/sources/gdelt';
 import { fetchGdacsSignals } from '@/lib/sources/gdacs';
 import { fetchRssSignals } from '@/lib/sources/rss-news';
 import { getGeneratedSignals } from '@/lib/sources/nim-generator';
+import { getCached } from '@/lib/cache';
+import { PIPELINE_CACHE_KEY } from '@/lib/pipeline/enrichment-pipeline';
 import type { Signal } from '@/lib/types';
 
 export async function GET(
@@ -12,21 +14,30 @@ export async function GET(
 ) {
   const { id } = params;
 
-  // Search across all sources in parallel (caches are already warm from globe loads)
-  const [gdelt, gdacs, rss, generated] = await Promise.allSettled([
-    fetchGdeltSignals(),
-    fetchGdacsSignals(),
-    fetchRssSignals(),
-    Promise.resolve(getGeneratedSignals()),
-  ]);
+  // Prefer the cron-produced pipeline cache — it's the only place
+  // correlatedIds/corroborationLinks exist (computed once per cron run,
+  // not re-derivable cheaply per-request).
+  const pipelineCached = await getCached<Signal[]>(PIPELINE_CACHE_KEY);
 
-  const allSignals: Signal[] = [
-    ...loadSeedSignals(),
-    ...(gdelt.status    === 'fulfilled' ? gdelt.value     : []),
-    ...(gdacs.status    === 'fulfilled' ? gdacs.value     : []),
-    ...(rss.status      === 'fulfilled' ? rss.value       : []),
-    ...(generated.status === 'fulfilled' ? generated.value : []),
-  ];
+  let allSignals: Signal[];
+  if (pipelineCached) {
+    allSignals = pipelineCached;
+  } else {
+    const [gdelt, gdacs, rss, generated] = await Promise.allSettled([
+      fetchGdeltSignals(),
+      fetchGdacsSignals(),
+      fetchRssSignals(),
+      Promise.resolve(getGeneratedSignals()),
+    ]);
+
+    allSignals = [
+      ...loadSeedSignals(),
+      ...(gdelt.status    === 'fulfilled' ? gdelt.value     : []),
+      ...(gdacs.status    === 'fulfilled' ? gdacs.value     : []),
+      ...(rss.status      === 'fulfilled' ? rss.value       : []),
+      ...(generated.status === 'fulfilled' ? generated.value : []),
+    ];
+  }
 
   const signal = allSignals.find(s => s.id === id);
 
@@ -64,7 +75,13 @@ export async function GET(
     related.push(...candidates);
   }
 
-  return NextResponse.json({ signal, related }, {
+  // Cross-category correlations (economic/political/military interpolation),
+  // computed once per cron run — empty until the pipeline cache is warm.
+  const correlated: Signal[] = (signal.correlatedIds ?? [])
+    .map(cid => allSignals.find(s => s.id === cid))
+    .filter((s): s is Signal => s != null);
+
+  return NextResponse.json({ signal, related, correlated }, {
     headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' },
   });
 }

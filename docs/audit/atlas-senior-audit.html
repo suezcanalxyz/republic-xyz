@@ -1,0 +1,623 @@
+<title>ATLAS Senior Audit</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #060a10;
+    --surface: #0d141d;
+    --surface-raised: #111a24;
+    --border: #1c2b3a;
+    --border-soft: #131f2b;
+    --text: #d7e4ee;
+    --text-dim: #7d93a8;
+    --text-faint: #4a5c70;
+    --accent: #57e7ff;
+    --accent-dim: #2a5a68;
+    --warn: #ffb648;
+    --critical: #ff5470;
+    --good: #6fe3a5;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Public Sans', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --surface-raised: #ffffff;
+      --border: #d7dee5;
+      --border-soft: #e4e9ee;
+      --text: #131c26;
+      --text-dim: #55677a;
+      --text-faint: #92a1b0;
+      --accent: #0891a8;
+      --accent-dim: #b8e8ee;
+      --warn: #b5720a;
+      --critical: #c22c4b;
+      --good: #1f8c5c;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --border: #d7dee5;
+    --border-soft: #e4e9ee;
+    --text: #131c26;
+    --text-dim: #55677a;
+    --text-faint: #92a1b0;
+    --accent: #0891a8;
+    --accent-dim: #b8e8ee;
+    --warn: #b5720a;
+    --critical: #c22c4b;
+    --good: #1f8c5c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-dim); color: var(--bg); }
+
+  a { color: var(--accent); }
+
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 56px 28px 120px;
+  }
+
+  /* Letterhead */
+  .letterhead {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+    background: linear-gradient(180deg, var(--surface), var(--bg));
+  }
+  .letterhead-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .letterhead-tag {
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  h1.masthead {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(30px, 4.4vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    text-wrap: balance;
+    font-optical-sizing: auto;
+  }
+  .masthead-sub {
+    font-size: 16px;
+    color: var(--text-dim);
+    max-width: 62ch;
+    margin: 0;
+  }
+  .letterhead-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+  .letterhead-meta div span:first-child {
+    display: block;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+
+  /* Section rhythm */
+  section { margin-bottom: 52px; }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: -0.005em;
+    margin: 4px 0 18px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    margin: 26px 0 10px;
+    color: var(--text);
+  }
+  p { max-width: 68ch; margin: 0 0 14px; color: var(--text); }
+  p.lede { font-size: 17px; color: var(--text-dim); max-width: 66ch; }
+  ul, ol { max-width: 66ch; padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 7px; }
+  strong { color: var(--text); font-weight: 700; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-soft);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+
+  /* Verdict strip */
+  .verdict {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 22px 0 8px;
+  }
+  .verdict-cell {
+    background: var(--surface);
+    padding: 16px 18px;
+  }
+  .verdict-cell .k {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .verdict-cell .v {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .v.good { color: var(--good); }
+  .v.warn { color: var(--warn); }
+
+  /* Caution callout */
+  .callout {
+    border-left: 3px solid var(--critical);
+    background: color-mix(in srgb, var(--critical) 8%, var(--surface));
+    padding: 18px 22px;
+    border-radius: 0 3px 3px 0;
+    margin: 20px 0;
+  }
+  .callout .callout-head {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--critical);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .callout p { margin-bottom: 8px; max-width: none; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* Feature cards */
+  .feature {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    background: var(--surface);
+  }
+  .feature-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .feature-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .chip.feasible { color: var(--good); }
+  .chip.medium { color: var(--warn); }
+  .chip.build { color: var(--accent); }
+  .feature p { margin-bottom: 8px; }
+  .feature .how {
+    font-size: 14px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border-soft);
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+  .feature .how strong { color: var(--text-dim); font-weight: 600; }
+
+  /* Roadmap table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-raised);
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .prio {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 7px;
+    vertical-align: middle;
+  }
+  .prio.p1 { background: var(--critical); }
+  .prio.p2 { background: var(--warn); }
+  .prio.p3 { background: var(--accent); }
+  .effort { font-family: var(--font-mono); color: var(--text-dim); font-size: 13px; }
+
+  /* Gap checklist */
+  .gap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .gap-item {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 16px;
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .gap-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    flex-shrink: 0;
+    width: 44px;
+    text-align: center;
+    padding: 3px 0;
+    border-radius: 2px;
+    margin-top: 1px;
+  }
+  .gap-status.missing { background: color-mix(in srgb, var(--critical) 16%, transparent); color: var(--critical); }
+  .gap-status.have { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
+  .gap-item .gt { font-weight: 600; font-size: 14px; display: block; margin-bottom: 3px; }
+  .gap-item .gd { font-size: 13px; color: var(--text-dim); }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 32px 18px 90px; }
+    .letterhead { padding: 20px 18px; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="letterhead">
+    <div class="letterhead-top">
+      <span>Suez Canal Republic &middot; Engineering Review</span>
+      <span class="letterhead-tag">Internal &middot; Portfolio Track</span>
+    </div>
+    <h1 class="masthead">ATLAS: from working demo to investigative instrument</h1>
+    <p class="masthead-sub">
+      An honest audit of where the repo stands after this session's data-pipeline fixes,
+      what separates it from a senior-grade engineering artifact, and a concrete path
+      toward a genuine OSINT/forensic tool &mdash; not just a prettier map.
+    </p>
+    <div class="letterhead-meta">
+      <div><span>Subject</span>republic-xyz &middot; ATLAS</div>
+      <div><span>Benchmark</span>SeaCommons (same org)</div>
+      <div><span>Live</span>republic.suezcanal.xyz</div>
+      <div><span>Scope</span>Eng maturity + OSINT roadmap</div>
+    </div>
+  </div>
+
+  <section>
+    <span class="section-num">01</span>
+    <h2>Where it actually stands right now</h2>
+    <p class="lede">
+      Four real bugs were found and fixed this session &mdash; not cosmetic ones. The site went
+      from serving 13 static seed signals to 76&ndash;157 live ones depending on source health,
+      with a genuinely working cron&rarr;public handoff for the first time.
+    </p>
+    <div class="verdict">
+      <div class="verdict-cell"><span class="k">Before this session</span><span class="v warn">Broken pipeline</span></div>
+      <div class="verdict-cell"><span class="k">After this session</span><span class="v good">Live &amp; correct</span></div>
+      <div class="verdict-cell"><span class="k">Senior-repo readiness</span><span class="v warn">Not yet</span></div>
+      <div class="verdict-cell"><span class="k">Product readiness</span><span class="v warn">Prototype</span></div>
+    </div>
+    <p>
+      That distinction matters: <strong>a working demo and a senior engineering artifact are
+      different claims.</strong> SeaCommons, in the same GitHub org, already clears the second
+      bar &mdash; CI, CodeQL, typed contracts, ADRs, a documented AI-engineering policy. ATLAS
+      does not, yet. The rest of this document treats those as two separate, sequential tracks.
+    </p>
+  </section>
+
+  <section>
+    <span class="section-num">02</span>
+    <h2>Engineering maturity gap</h2>
+    <p>
+      Judged against the org's own bar (SeaCommons), not an abstract ideal. Each row is either
+      present or it isn't &mdash; no partial credit, because a recruiter or a real investigative
+      partner checking the repo won't give partial credit either.
+    </p>
+    <div class="gap-grid">
+      <div class="gap-item">
+        <span class="gap-status missing">NONE</span>
+        <div><span class="gt">Automated tests</span><span class="gd">Zero test files. The signal-ranker, dedup logic, and clustering math are exactly the kind of pure functions that break silently &mdash; as this session proved.</span></div>
+      </div>
+      <div class="gap-item">
+        <span class="gap-status missing">NONE</span>
+        <div><span class="gt">CI / GitHub Actions</span><span class="gd">No lint, typecheck, or build gate on PRs. Every bug found today would have been caught by a 30-second CI job.</span></div>
+      </div>
+      <div class="gap-item">
+        <span class="gap-status missing">NONE</span>
+        <div><span class="gt">Architecture docs</span><span class="gd">No ARCHITECTURE.md, no data-flow diagram, no ADRs. The pipeline cache design (just rebuilt) isn't written down anywhere but this repo's commit messages.</span></div>
+      </div>
+      <div class="gap-item">
+        <span class="gap-status missing">NONE</span>
+        <div><span class="gt">Observability</span><span class="gd">No structured logging, no error tracking. Today's investigation required a throwaway debug endpoint because there was no other way to see what was failing in production.</span></div>
+      </div>
+      <div class="gap-item">
+        <span class="gap-status have">HAVE</span>
+        <div><span class="gt">Working README</span><span class="gd">Portfolio-grade, badges, architecture overview &mdash; added earlier this session.</span></div>
+      </div>
+      <div class="gap-item">
+        <span class="gap-status have">HAVE</span>
+        <div><span class="gt">Persistent data layer</span><span class="gd">Postgres + Prisma now correctly wired for cron&rarr;public handoff, with a lazy client that doesn't break the build.</span></div>
+      </div>
+    </div>
+    <p>
+      This is the cheap, high-signal work: a CI workflow (typecheck + build on every push, ~15
+      minutes to write, mirrors SeaCommons's <code>ci.yml</code>) and a first test file covering
+      <code>signal-ranker.ts</code> and the globe route's dedup logic would close half this gap in
+      an afternoon. Recommend doing this before the OSINT feature work below &mdash; it's the
+      difference between "found four bugs by hand" and "a bug like that can't ship again."
+    </p>
+  </section>
+
+  <section>
+    <span class="section-num">03</span>
+    <h2>The real opportunity: stop being a map, start being an instrument</h2>
+    <p class="lede">
+      ATLAS currently visualizes public news. That's a demo. What makes it a tool an outfit
+      like Forensic Architecture, Bellingcat, or an NGO monitoring team would actually reach
+      for is answering questions a reporter can't answer by hand &mdash; starting with the
+      niche the schema is already halfway built for: <strong>OSINT verification tooling</strong>,
+      not just event aggregation.
+    </p>
+
+    <div class="feature">
+      <div class="feature-head">
+        <span class="feature-title">Overhead-satellite lookup</span>
+        <span class="chip feasible">Feasible now</span>
+      </div>
+      <p>
+        "Which satellite could have imaged this coordinate at this time?" is the single most
+        common first question in a geolocation investigation, and it's a solved problem with
+        public data &mdash; nobody has wired it into a public map yet.
+      </p>
+      <div class="how">
+        <strong>How:</strong> pull TLE (orbital element) sets from CelesTrak's free API for
+        Earth-observation constellations (Sentinel-2, Landsat, Planet's public catalog,
+        commercial imaging sats with public TLEs), propagate with SGP4
+        (<code>satellite.js</code> on the frontend or <code>python-skyfield</code> on the
+        backend &mdash; both free, both fast enough for interactive use), and answer: for a
+        clicked point + time window, which satellites had it in view, and roughly what
+        resolution/angle. Cross-reference against Sentinel Hub's actual acquisition catalog
+        (also free, API-keyed) to move from "could have" to "did." This is exactly the kind of
+        capability that turns a browsing tool into an investigation tool.
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-head">
+        <span class="feature-title">Evidence chain-of-custody export</span>
+        <span class="chip medium">Schema exists, unused</span>
+      </div>
+      <p>
+        The Prisma schema already has <code>EvidenceItem</code>, <code>Claim</code>,
+        <code>FactCheck</code>, <code>Contradiction</code>, and <code>SatelliteObservation</code>
+        models &mdash; a full forensic data model, built and never wired to any route. This is
+        the single biggest gap between "map" and "investigative package."
+      </p>
+      <div class="how">
+        <strong>How:</strong> wire the existing models into a real ingest path (not the JSON
+        seed shortcut currently used), then add one export: a signed, hash-chained JSON packet
+        per case &mdash; source URLs, archive.org/archive.today snapshots, timestamps, a SHA-256
+        of each artifact. That's the same shape Forensic Architecture's own methodology
+        publishes as an "evidence file." Doesn't need blockchain or anything exotic &mdash;
+        just a signed manifest, which is what actually matters for admissibility discussions.
+      </div>
+    </div>
+
+    <div class="feature">
+      <div class="feature-head">
+        <span class="feature-title">Tiered public/private Live map</span>
+        <span class="chip build">Architecture pattern exists in-org</span>
+      </div>
+      <p>
+        You asked for a 24/7-hosted map with real capabilities, self-hostable, safe to test
+        locally. SeaCommons already solved exactly this problem &mdash; a privacy-filtered
+        public projection served by an edge worker, with the full operational picture behind
+        auth. That's the correct shape for ATLAS too: public visitors see a redacted, delayed,
+        aggregated view; an authenticated operator console sees raw signals, source chains, and
+        the satellite/evidence tooling above.
+      </div>
+      <div class="how">
+        <strong>How:</strong> don't reinvent this &mdash; port the pattern.
+        <code>ops/</code> already targets self-hosted VM deployment with local Ollama (zero
+        external API dependency, genuinely air-gapped-capable), which is the right foundation
+        for "install locally, test safely." Add a <code>docker-compose.yml</code> that starts
+        Postgres + the app + Ollama in one command, matching what SeaCommons's
+        <code>docker-compose.pilot.yml</code> already demonstrates works.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-num">04</span>
+    <h2>Handle with care: the investigation/ folder</h2>
+    <div class="callout">
+      <div class="callout-head">&#9888; Not for integration as-is</div>
+      <p>
+        <code>SITI/investigation/_FORENSIC_ANALYSIS</code> was checked at the directory-listing
+        level only &mdash; filenames, not contents &mdash; and that was already enough to see this
+        is an <strong>active real case</strong> with identifiable individuals, photos, and video,
+        not a generic OSINT example set. It was not opened further, and nothing from it appears
+        anywhere in this document, the codebase, or any commit.
+      </p>
+      <p>
+        What's genuinely reusable is the <strong>directory shape</strong> &mdash;
+        <code>osint/</code>, <code>satellite/</code>, <code>security/</code>, <code>ui/</code>
+        as separate concerns &mdash; which is a reasonable module boundary for ATLAS's own
+        forensic layer. That structure can inform the design. The case files inside it must
+        never be copied, referenced, screenshotted, or committed into a public repository under
+        any circumstance. If any tooling script in there (a satellite-pass calculator, a hashing
+        utility) is worth lifting, it gets rewritten clean-room against public/synthetic test
+        data, reviewed for any embedded case references, before it goes anywhere near
+        <code>republic-xyz</code>.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-num">05</span>
+    <h2>Prioritized roadmap</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Item</th><th>Why</th><th>Effort</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="prio p1"></span>P1</td>
+            <td>CI workflow (typecheck + build gate)</td>
+            <td>Would have caught 3 of today's 4 bugs before they shipped</td>
+            <td class="effort">~1h</td>
+          </tr>
+          <tr>
+            <td><span class="prio p1"></span>P1</td>
+            <td>First test suite: signal-ranker, dedup logic</td>
+            <td>The exact code that broke silently for weeks</td>
+            <td class="effort">~1 day</td>
+          </tr>
+          <tr>
+            <td><span class="prio p2"></span>P2</td>
+            <td>ARCHITECTURE.md + data-flow doc</td>
+            <td>Portfolio credibility signal; also just useful</td>
+            <td class="effort">~half day</td>
+          </tr>
+          <tr>
+            <td><span class="prio p2"></span>P2</td>
+            <td>docker-compose local stack (app + Postgres + Ollama)</td>
+            <td>Unlocks "install locally, test safely" ask directly</td>
+            <td class="effort">~1 day</td>
+          </tr>
+          <tr>
+            <td><span class="prio p3"></span>P3</td>
+            <td>Satellite overhead-lookup (CelesTrak + SGP4)</td>
+            <td>Highest-differentiation feature; no other public map does this</td>
+            <td class="effort">~3&ndash;5 days</td>
+          </tr>
+          <tr>
+            <td><span class="prio p3"></span>P3</td>
+            <td>Evidence export (wire existing Prisma models)</td>
+            <td>Turns ATLAS from viewer into investigative package</td>
+            <td class="effort">~1&ndash;2 weeks</td>
+          </tr>
+          <tr>
+            <td><span class="prio p3"></span>P3</td>
+            <td>Public/private tiered Live map (SeaCommons pattern)</td>
+            <td>Matches the 24/7-hosted, capability-rich vision directly</td>
+            <td class="effort">~2 weeks</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <span class="section-num">06</span>
+    <h2>Bottom line</h2>
+    <p>
+      The data pipeline is now honest &mdash; it shows what it actually collects, nothing faked.
+      That was the prerequisite for everything else. The senior-repo gap (P1/P2 above) is
+      mechanical and fast. The OSINT differentiation (P3) is where ATLAS stops competing with
+      every other "news on a globe" side project and starts being closer to what Forensic
+      Architecture or Bellingcat's internal tooling actually looks like &mdash; and it's buildable
+      incrementally on infrastructure that already exists in this org, not from scratch.
+    </p>
+  </section>
+
+  <footer>
+    <span>ATLAS &middot; republic-xyz</span>
+    <span>Prepared this session &middot; not for external distribution as-is</span>
+  </footer>
+
+</div>

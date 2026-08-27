@@ -26,6 +26,7 @@ interface IntelResult {
 export default function SignalInspector({ signalId, onClose, onNavigate }: Props) {
   const [signal, setSignal] = useState<Signal | null>(null);
   const [related, setRelated] = useState<Signal[]>([]);
+  const [correlated, setCorrelated] = useState<Signal[]>([]);
   const [tab, setTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
@@ -60,7 +61,7 @@ export default function SignalInspector({ signalId, onClose, onNavigate }: Props
   };
 
   useEffect(() => {
-    if (!signalId) { setSignal(null); setRelated([]); setIntel(null); setFetchError(false); return; }
+    if (!signalId) { setSignal(null); setRelated([]); setCorrelated([]); setIntel(null); setFetchError(false); return; }
     setLoading(true);
     setFetchError(false);
     setTab('overview');
@@ -68,7 +69,7 @@ export default function SignalInspector({ signalId, onClose, onNavigate }: Props
       .then(async r => {
         const d = await r.json();
         if (!r.ok || !d.signal) { setFetchError(true); setSignal(null); }
-        else { setSignal(d.signal); setRelated(d.related ?? []); }
+        else { setSignal(d.signal); setRelated(d.related ?? []); setCorrelated(d.correlated ?? []); }
       })
       .catch(() => { setSignal(null); setFetchError(true); })
       .finally(() => setLoading(false));
@@ -211,6 +212,30 @@ export default function SignalInspector({ signalId, onClose, onNavigate }: Props
                     ))}
                   </div>
                 )}
+                {correlated.length > 0 && (
+                  <div className={styles.section}>
+                    <div className={styles.sectionHead}>Correlated developments</div>
+                    <p className={styles.correlatedNote}>
+                      Different topic, same region and window — economic, political and
+                      military threads that may describe one underlying situation.
+                    </p>
+                    {correlated.map(r => (
+                      <button
+                        key={r.id}
+                        className={`${styles.relatedItem} ${styles.correlatedItem}`}
+                        onClick={() => onNavigate(r.id)}
+                      >
+                        <span
+                          className={styles.relatedDot}
+                          style={{ background: CATEGORIES[r.category]?.color ?? '#8899AA' }}
+                        />
+                        <span className={styles.relatedTitle}>{r.title}</span>
+                        <span className={styles.correlatedTag}>{CATEGORIES[r.category]?.label ?? r.category}</span>
+                        <span className={styles.relatedArrow}>→</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -231,6 +256,28 @@ export default function SignalInspector({ signalId, onClose, onNavigate }: Props
                     </div>
                   ))}
                 </div>
+                {signal.corroborationLinks && signal.corroborationLinks.length > 0 && (
+                  <div className={styles.section}>
+                    <div className={styles.sectionHead}>Corroboration checks</div>
+                    <p className={styles.correlatedNote}>
+                      Free, public, no-key checks — confirms independent evidence exists.
+                      Not a verification claim.
+                    </p>
+                    {signal.corroborationLinks.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.corroborationLink}
+                      >
+                        <span className={styles.diversityDot} style={{ background: link.type === 'archive' ? '#57E7FF' : '#B8FF57' }} />
+                        {link.label}
+                        <span className={styles.relatedArrow}>↗</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
                 <div className={styles.section}>
                   <div className={styles.sectionHead}>Evidence stack</div>
                   {signal.sourceCluster.length === 0 && (

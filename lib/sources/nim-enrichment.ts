@@ -98,7 +98,7 @@ function applyEnrichment(signal: Signal, e: EnrichmentResult): Signal {
 
 /** Batch-enrich signals, runs sequentially to respect NIM rate limits. */
 export async function enrichSignals(signals: Signal[]): Promise<Signal[]> {
-  if (!process.env.NVIDIA_NIM_API_KEY) return signals;
+  if (!process.env.NVIDIA_NIM_API_KEY && !process.env.GROQ_API_KEY) return signals;
 
   const results: Signal[] = [];
   for (const s of signals) {

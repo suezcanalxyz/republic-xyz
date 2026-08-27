@@ -50,10 +50,10 @@ const CATEGORY_WEIGHT: Record<string, number> = {
   tech_surveillance:      1.10,
   satellite_signals:      1.08,
   remote_warfare:         1.05,
+  gov_docs:               1.05, // leaked/declassified material — substantive, not soft news
   border_regimes:         1.00,
   migration_rescue:       1.00,
   climate_fire_desert:    1.00,
-  gov_docs:               0.95,
 };
 
 // ─── Corroboration grouping ───────────────────────────────────────────────────
@@ -162,10 +162,25 @@ export function rankSignals(signals: Signal[]): Signal[] {
   }).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
 
+// ─── Mainstream-noise filter ──────────────────────────────────────────────────
+// RSS world feeds carry sport/celebrity/entertainment alongside real news.
+// This is a blunt keyword filter, not topic modeling — it exists to stop
+// "La Liga" and "Tottenham sign..." from competing for map space with
+// substantive economic/political/military signals, nothing subtler.
+
+const SOFT_NOISE_PATTERN = /\b(transfer|signs?|loan move|match preview|final score|box office|premiere|album|celebrity|red carpet|awards? (show|ceremony)|royal (baby|wedding)|fashion week)\b/i;
+const SPORT_LEAGUE_PATTERN = /\b(la liga|premier league|champions league|uefa|fifa|nba|nfl|mlb|grand slam|world cup (qualifier|group))\b/i;
+
+function isSoftNoise(s: Signal): boolean {
+  if (s.type === 'SEED' || s.type === 'DEEP_CASE') return false; // curated content is exempt
+  const text = `${s.title} ${s.summary}`;
+  return SOFT_NOISE_PATTERN.test(text) || SPORT_LEAGUE_PATTERN.test(text);
+}
+
 /**
  * Filter signals below minimum viability threshold.
  * Removes: zero-location signals, very low-score auto_collected with no corroboration,
- * obvious duplicates by title similarity.
+ * obvious duplicates by title similarity, mainstream sport/entertainment noise.
  */
 export function filterSignals(signals: Signal[]): Signal[] {
   const seen = new Set<string>();
@@ -175,6 +190,8 @@ export function filterSignals(signals: Signal[]): Signal[] {
     // Skip signals with no valid coordinates
     if (isNaN(lng) || isNaN(lat)) return false;
     if (lng === 0 && lat === 0) return false;
+
+    if (isSoftNoise(s)) return false;
 
     // Archive non-SEED signals older than 14 days — keeps map current
     const ageDays = daysBefore(s.lastUpdated);

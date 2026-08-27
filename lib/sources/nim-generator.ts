@@ -118,7 +118,7 @@ function toSignal(gen: GeneratedSignal, headline: RssHeadline, idx: number): Sig
 
 /** Called from cron endpoint. Returns number of new signals generated. */
 export async function runNimGenerator(headlines: RssHeadline[]): Promise<number> {
-  if (!process.env.NVIDIA_NIM_API_KEY) return 0;
+  if (!process.env.NVIDIA_NIM_API_KEY && !process.env.GROQ_API_KEY) return 0;
 
   const existing = (await getCached<Signal[]>(GEN_CACHE_KEY)) ?? [];
   const existingUrls = new Set(existing.map(s => s.links?.[0]?.to ?? ''));

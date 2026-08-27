@@ -158,6 +158,9 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
   const pulseEntitiesRef = useRef<Map<string, any>>(new Map());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const arcEntitiesRef = useRef<any[]>([]);
+  // Cross-category correlation arcs (economic/political/military interpolation) — visually distinct from same-category arcs above
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const correlationArcEntitiesRef = useRef<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const satelliteLayerRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -616,6 +619,47 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
     viewer.scene.requestRender();
   }, [activeSignalId, signals]);
 
+  // Cross-category correlation arcs — economic/political/military "interpolation",
+  // distinct amber dashed style so they read as a different relationship than the
+  // same-category glow arcs above. Only draws to targets whose individual Signal
+  // is present in the currently loaded clusters (small clusters expose .signals).
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    const C = cesiumRef.current;
+
+    for (const arc of correlationArcEntitiesRef.current) viewer?.entities.remove(arc);
+    correlationArcEntitiesRef.current = [];
+
+    if (!viewer || !C || !activeSignalId) return;
+
+    const individual = signals.flatMap(c => c.signals ?? []);
+    const activeSignal = individual.find(s => s.id === activeSignalId);
+    if (!activeSignal?.correlatedIds?.length) return;
+
+    const byId = new Map(individual.map(s => [s.id, s]));
+    const [aLng, aLat] = activeSignal.location.coordinates;
+
+    for (const cid of activeSignal.correlatedIds) {
+      const target = byId.get(cid);
+      if (!target) continue;
+      const [tLng, tLat] = target.location.coordinates;
+      const arc = viewer.entities.add({
+        polyline: {
+          positions: C.Cartesian3.fromDegreesArray([aLng, aLat, tLng, tLat]),
+          width: 2,
+          arcType: C.ArcType.GEODESIC,
+          material: new C.PolylineDashMaterialProperty({
+            color: C.Color.fromCssColorString('#FFB648').withAlpha(0.8),
+            dashLength: 10,
+          }),
+        },
+      });
+      correlationArcEntitiesRef.current.push(arc);
+    }
+
+    viewer.scene.requestRender();
+  }, [activeSignalId, signals]);
+
   // Toggle overlay layer visibility when overlayLayers prop changes
   useEffect(() => {
     if (shippingDsRef.current)  shippingDsRef.current.show  = overlayLayers.has('shipping');
@@ -667,6 +711,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
       satOrbitEntitiesRef.current = [];
       pulseEntitiesRef.current.clear();
       arcEntitiesRef.current = [];
+      correlationArcEntitiesRef.current = [];
     };
   }, []);
 

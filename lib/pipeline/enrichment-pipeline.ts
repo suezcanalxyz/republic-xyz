@@ -13,6 +13,8 @@
 
 import type { Signal } from '../types';
 import { rankSignals, filterSignals } from '../sources/signal-ranker';
+import { correlateSignals } from './correlate';
+import { factCheckTopSignals } from './factcheck';
 import { nimChat, extractJson } from '../nim';
 import { setCached } from '../cache';
 
@@ -83,9 +85,12 @@ export async function runEnrichmentPipeline(rawSignals: Signal[]): Promise<Signa
   const filtered = filterSignals(rawSignals);
   const ranked = rankSignals(filtered);
 
-  if (!process.env.NVIDIA_NIM_API_KEY) {
-    await setCached(PIPELINE_CACHE_KEY, ranked, PIPELINE_TTL_MS);
-    return ranked;
+  const hasLlmKey = !!(process.env.NVIDIA_NIM_API_KEY || process.env.GROQ_API_KEY);
+  if (!hasLlmKey) {
+    const correlated = correlateSignals(ranked);
+    const checked = await factCheckTopSignals(correlated);
+    await setCached(PIPELINE_CACHE_KEY, checked, PIPELINE_TTL_MS);
+    return checked;
   }
 
   // Pass 2: NIM enrichment — only top signals, bounded cost
@@ -104,6 +109,8 @@ export async function runEnrichmentPipeline(rawSignals: Signal[]): Promise<Signa
 
   // Re-rank after enrichment (scores may have changed)
   const final = rankSignals([...enriched, ...rest]);
-  await setCached(PIPELINE_CACHE_KEY, final, PIPELINE_TTL_MS);
-  return final;
+  const correlated = correlateSignals(final);
+  const checked = await factCheckTopSignals(correlated);
+  await setCached(PIPELINE_CACHE_KEY, checked, PIPELINE_TTL_MS);
+  return checked;
 }

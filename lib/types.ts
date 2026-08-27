@@ -81,6 +81,10 @@ export interface Signal {
   links?: SignalLink[];
   score?: number;
   visible: boolean;
+  /** Cross-category signals (different topic, same region + time window) — the "interpolation" layer. */
+  correlatedIds?: string[];
+  /** Free, public, no-key corroboration checks — not legal verification, just "does independent evidence exist". */
+  corroborationLinks?: { type: 'archive' | 'discussion'; url: string; label: string }[];
 }
 
 export interface ClusteredSignal {

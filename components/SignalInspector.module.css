@@ -248,6 +248,41 @@
   transform: translateX(0);
 }
 
+.correlatedNote {
+  font-size: 9px;
+  color: #4a6a82;
+  line-height: 1.5;
+  margin: 0 0 8px;
+  max-width: none;
+}
+.correlatedItem { border-bottom-color: rgba(255, 182, 72, 0.15); }
+.correlatedTag {
+  flex-shrink: 0;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #FFB648;
+  border: 1px solid rgba(255, 182, 72, 0.4);
+  border-radius: 20px;
+  padding: 1px 6px;
+}
+
+.corroborationLink {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 0;
+  font-size: 10px;
+  color: #6a8aaa;
+  text-decoration: none;
+  border-bottom: 1px solid #080f18;
+  transition: color 0.15s;
+}
+.corroborationLink:hover { color: #cfe6f5; }
+.corroborationLink .relatedArrow { color: #B8FF57; opacity: 0.6; }
+.corroborationLink:hover .relatedArrow { opacity: 1; }
+
 .diversityItem {
   display: flex;
   align-items: center;
