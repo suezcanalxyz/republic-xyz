@@ -10,11 +10,11 @@
  * "cache miss, refetch live" instead of a 500.
  */
 
-import { db } from './db';
+import { getDb } from './db';
 
 export async function getCached<T>(key: string): Promise<T | null> {
   try {
-    const entry = await db.cacheEntry.findUnique({ where: { key } });
+    const entry = await getDb().cacheEntry.findUnique({ where: { key } });
     if (!entry || entry.expiresAt < new Date()) return null;
     return entry.data as T;
   } catch {
@@ -25,7 +25,7 @@ export async function getCached<T>(key: string): Promise<T | null> {
 export async function setCached<T>(key: string, data: T, ttlMs: number): Promise<void> {
   const expiresAt = new Date(Date.now() + ttlMs);
   try {
-    await db.cacheEntry.upsert({
+    await getDb().cacheEntry.upsert({
       where: { key },
       create: { key, data: data as object, expiresAt },
       update: { data: data as object, expiresAt },
