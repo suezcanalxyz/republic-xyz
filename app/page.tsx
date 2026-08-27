@@ -211,6 +211,7 @@ export default function AtlasPage() {
       <SignalInspector
         signalId={activeSignalId}
         onClose={() => setActiveSignalId(null)}
+        onNavigate={setActiveSignalId}
       />
     </>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Signal } from '@/lib/types';
 import { CATEGORIES } from '@/lib/types';
 import styles from './SignalInspector.module.css';
@@ -8,6 +9,7 @@ import styles from './SignalInspector.module.css';
 interface Props {
   signalId: string | null;
   onClose: () => void;
+  onNavigate: (id: string) => void;
 }
 
 type Tab = 'overview' | 'evidence' | 'sources' | 'perspectives' | 'reading' | 'intel';
@@ -21,7 +23,7 @@ interface IntelResult {
   nim_model: string;
 }
 
-export default function SignalInspector({ signalId, onClose }: Props) {
+export default function SignalInspector({ signalId, onClose, onNavigate }: Props) {
   const [signal, setSignal] = useState<Signal | null>(null);
   const [related, setRelated] = useState<Signal[]>([]);
   const [tab, setTab] = useState<Tab>('overview');
@@ -72,12 +74,19 @@ export default function SignalInspector({ signalId, onClose }: Props) {
       .finally(() => setLoading(false));
   }, [signalId]);
 
-  if (!signalId) return null;
-
   const cat = signal ? (CATEGORIES[signal.category] ?? { label: signal.category, color: '#8899AA', abbr: '?' }) : null;
 
   return (
-    <div className={styles.inspector}>
+    <AnimatePresence>
+      {signalId && (
+        <motion.div
+          key="inspector"
+          className={styles.inspector}
+          initial={{ x: 44, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 44, opacity: 0 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+        >
       <div className={styles.dragHandle} aria-hidden="true" />
       <div className={styles.header}>
         {cat && (
@@ -147,8 +156,15 @@ export default function SignalInspector({ signalId, onClose }: Props) {
 
           {/* Tab content */}
           <div className={styles.body}>
+            <AnimatePresence mode="wait">
             {tab === 'overview' && (
-              <div>
+              <motion.div
+                key="overview"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
                 <p className={styles.summary}>{signal.summary}</p>
                 {signal.whatHappened && (
                   <div className={styles.section}>
@@ -180,21 +196,32 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                   <div className={styles.section}>
                     <div className={styles.sectionHead}>Related signals</div>
                     {related.map(r => (
-                      <div key={r.id} className={styles.relatedItem}>
+                      <button
+                        key={r.id}
+                        className={styles.relatedItem}
+                        onClick={() => onNavigate(r.id)}
+                      >
                         <span
                           className={styles.relatedDot}
                           style={{ background: CATEGORIES[r.category]?.color ?? '#8899AA' }}
                         />
                         <span className={styles.relatedTitle}>{r.title}</span>
-                      </div>
+                        <span className={styles.relatedArrow}>→</span>
+                      </button>
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
 
             {tab === 'evidence' && (
-              <div>
+              <motion.div
+                key="evidence"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
                 <div className={styles.section}>
                   <div className={styles.sectionHead}>Source diversity</div>
                   {signal.sourceDiversity.map(d => (
@@ -240,11 +267,17 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {tab === 'sources' && (
-              <div>
+              <motion.div
+                key="sources"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
                 <div className={styles.sectionHead}>Source matrix</div>
                 {signal.sourceCluster.length === 0 && (
                   <p className={styles.empty}>No sources documented yet.</p>
@@ -273,11 +306,17 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                   Source matrix: identifies who reported, from where, and with what framing.
                   Cross-region corroboration raises signal confidence.
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {tab === 'perspectives' && (
-              <div>
+              <motion.div
+                key="perspectives"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
                 {!signal.perspectives && (
                   <p className={styles.empty}>No perspective frames documented for this signal yet.</p>
                 )}
@@ -287,11 +326,17 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                     <p className={styles.perspFrame}>{pf.frame}</p>
                   </div>
                 ))}
-              </div>
+              </motion.div>
             )}
 
             {tab === 'reading' && (
-              <div>
+              <motion.div
+                key="reading"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
                 {signal.republicReading ? (
                   <div className={styles.reading}>
                     <div className={styles.readingHead}>Republic Reading</div>
@@ -310,11 +355,17 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                   Republic Readings situate the signal within the political project of the Suez Canal Republic.
                   They are editorial, not neutral.
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {tab === 'intel' && (
-              <div>
+              <motion.div
+                key="intel"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
                 {!intel && !intelLoading && (
                   <div className={styles.intelPrompt}>
                     <p className={styles.intelDesc}>
@@ -381,11 +432,14 @@ export default function SignalInspector({ signalId, onClose }: Props) {
                     </button>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </>
       )}
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
