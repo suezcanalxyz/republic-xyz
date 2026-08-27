@@ -54,9 +54,8 @@ model Signal {
   score         Float?            // strategic relevance 0-100
   visible       Boolean           @default(true)
 
-  // GeoJSON geometry stored as JSONB — PostGIS point also in locationGeom
+  // GeoJSON geometry stored as JSONB (managed Postgres here has no PostGIS extension)
   locationJson  Json?             // { name, country, region, coordinates: [lng,lat], confidence }
-  locationGeom  Unsupported("geometry(Point,4326)")?
 
   // Narrative fields
   republicReading  String?
@@ -267,8 +266,7 @@ model Location {
   country     String?
   region      String?
   type        String? // city | port | chokepoint | canal | border | camp | base
-  coordinates Json?   // [lng, lat]
-  geom        Unsupported("geometry(Point,4326)")?
+  coordinates Json?   // [lng, lat] (managed Postgres here has no PostGIS extension)
   notes       String?
   createdAt   DateTime @default(now())
 
