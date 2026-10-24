@@ -54,6 +54,7 @@ function clusterize(signals: Signal[], zoom: number): ClusteredSignal[] {
 
 function parseTimeWindow(tw: string): Date | null {
   const now = new Date();
+  if (tw === '24h') return new Date(Date.now() - 24 * 60 * 60 * 1000);
   const match = tw.match(/^(\d+)([dmy])$/);
   if (!match) return null;
   const n = parseInt(match[1]);
@@ -133,7 +134,10 @@ export async function GET(req: NextRequest) {
   if (params.timeWindow && params.timeWindow !== 'all') {
     const cutoff = parseTimeWindow(params.timeWindow);
     if (cutoff) {
-      signals = signals.filter(s => new Date(s.lastUpdated) >= cutoff);
+      signals = signals.filter(s => {
+        const timestamp = Date.parse(s.lastUpdated);
+        return Number.isFinite(timestamp) && timestamp >= cutoff.getTime() && timestamp <= Date.now();
+      });
     }
   }
 
