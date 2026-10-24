@@ -410,3 +410,18 @@
   .result { min-height: 48px; padding: 10px; font-size: 11px; }
   .resultLoc { display: none; }
 }
+
+/* Client-ready mobile controls: search and time filters have dedicated rows. */
+@media (max-width: 768px) {
+  .bar { height: 124px; }
+  .modes { height: 44px; }
+  .searchWrap { order: 1; flex: 0 0 100%; height: 40px; border-bottom: 1px solid #14283b; }
+  .search { width: 100%; min-width: 0; color: #d9e9f4; }
+  .search::placeholder { color: #7892a5; }
+  .controls { order: 2; width: 100%; height: 40px; justify-content: space-between; border-left: 0; padding: 0 8px; }
+  .timeGroup { flex: 1; justify-content: space-around; }
+  .timeBtn { min-width: 44px; height: 40px; font-size: 11px; }
+  .layersBtn { min-width: 44px; height: 34px; }
+  .layersPanel { top: 124px; }
+  .results { top: 124px; }
+}
