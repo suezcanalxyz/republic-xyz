@@ -57,12 +57,12 @@ export default function AtlasPage() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d');
   const [activeLayers, setActiveLayers] = useState<Set<string>>(new Set());
   const [overlayLayers, setOverlayLayers] = useState<Set<string>>(
-    new Set(['cables', 'shipping', 'corridors', 'satellites'])
+    new Set<string>()
   );
   const [zoom, setZoom] = useState(2);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [liveActive, setLiveActive] = useState(false);
-  const [satellite, setSatellite] = useState(false);
+  const [satellite] = useState(false);
   const fetchRef = useRef<AbortController | null>(null);
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -180,33 +180,6 @@ export default function AtlasPage() {
         )}
         <span>republic.suezcanal.xyz</span>
       </div>
-
-      {/* Satellite toggle */}
-      <button
-        onClick={() => setSatellite(v => !v)}
-        title={satellite ? 'Hide satellite imagery' : 'Show satellite imagery'}
-        style={{
-          position: 'fixed',
-          bottom: 'calc(20px + var(--safe-bottom, 0px))',
-          right: satellite && activeSignalId ? 'calc(376px + var(--safe-right, 0px))' : 'calc(16px + var(--safe-right, 0px))',
-          zIndex: 70,
-          background: satellite ? 'rgba(87,231,255,0.12)' : 'rgba(3,8,16,0.82)',
-          border: `1px solid ${satellite ? '#57E7FF' : '#0f2035'}`,
-          color: satellite ? '#57E7FF' : '#3d5a70',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          padding: '6px 12px',
-          cursor: 'pointer',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          transition: 'all 0.2s',
-          lineHeight: 1,
-        }}
-      >
-        SAT
-      </button>
 
       <SignalInspector
         signalId={activeSignalId}
