@@ -137,3 +137,11 @@ button { touch-action: manipulation; }
   }
   .statusBadge span:last-child { display: none; }
 }
+
+/* Higher-contrast readable status and phone navigation. */
+.statusBadge { color: #9bb7ca; background: rgba(2,9,17,.76); padding: 7px 9px; border: 1px solid #20364a; border-radius: 3px; }
+@media (max-width: 768px) {
+  :root { --bar-height: 124px; }
+  .statusBadge { bottom: calc(12px + var(--safe-bottom)); left: calc(8px + var(--safe-left)); opacity: 1; font-size: 9px; }
+  .globeShell.withInspector + .statusBadge { display: none; }
+}
