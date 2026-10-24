@@ -224,17 +224,8 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
     // Remove any default imagery Cesium adds automatically
     viewer.imageryLayers.removeAll();
 
-    // Political basemap — CartoDB Dark Matter no-labels, elegant country borders
-    // Use local `viewer` directly (viewerRef.current not set until end of initViewer)
-    const politicalProvider = new C.UrlTemplateImageryProvider({
-      url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png',
-      subdomains: ['a', 'b', 'c', 'd'],
-      maximumLevel: 19,
-      credit: '© OpenStreetMap contributors © CARTO',
-    });
-    politicalLayerRef.current = viewer.imageryLayers.addImageryProvider(politicalProvider);
-    politicalLayerRef.current.alpha = 0.85;
-    politicalLayerRef.current.brightness = 1.1;
+    // Open-source, keyless geographic globe. Cesium's WGS84 ellipsoid
+    // is always available; overlays are rendered independently of basemap tiles.
 
     // Dark blue-grey globe — forensic aesthetic, visible landmass silhouette
     viewer.scene.globe.baseColor = C.Color.fromCssColorString('#0d1f2d');
@@ -674,33 +665,8 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
     viewerRef.current?.scene.requestRender();
   }, [overlayLayers]);
 
-  // Swap between political basemap and satellite imagery
-  useEffect(() => {
-    const viewer = viewerRef.current;
-    const C = cesiumRef.current;
-    if (!viewer || !C) return;
-
-    if (showSatellite) {
-      // Hide political tiles (may not exist yet on mobile)
-      if (politicalLayerRef.current) politicalLayerRef.current.show = false;
-      if (!satelliteLayerRef.current) {
-        C.ArcGisMapServerImageryProvider.fromUrl(
-          'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'
-        ).then((provider: unknown) => {
-          satelliteLayerRef.current = viewer.imageryLayers.addImageryProvider(provider);
-          viewer.scene.requestRender();
-        }).catch(() => {});
-      } else {
-        satelliteLayerRef.current.show = true;
-        viewer.scene.requestRender();
-      }
-    } else {
-      // Hide satellite, restore political tiles
-      if (satelliteLayerRef.current) satelliteLayerRef.current.show = false;
-      if (politicalLayerRef.current) politicalLayerRef.current.show = true;
-      viewer.scene.requestRender();
-    }
-  }, [showSatellite]);
+  // Satellite imagery is disabled until an independently hosted, licensed source exists.
+  // The globe itself works without API keys or external imagery services.
 
   useEffect(() => {
     return () => {
