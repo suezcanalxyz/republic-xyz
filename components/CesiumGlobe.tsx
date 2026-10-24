@@ -204,6 +204,10 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
     // Satellite tiles added dynamically via showSatellite prop.
     const viewer = new C.Viewer(containerRef.current, {
       terrainProvider: new C.EllipsoidTerrainProvider(),
+      // Prevent Cesium Viewer from requesting its default ion-backed base layer.
+      // The public CARTO layer is installed explicitly below.
+      baseLayer: false,
+      imageryProvider: false,
       animation: false,
       timeline: false,
       baseLayerPicker: false,
