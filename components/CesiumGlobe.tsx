@@ -227,6 +227,20 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
     // Open-source, keyless geographic globe. Cesium's WGS84 ellipsoid
     // is always available; overlays are rendered independently of basemap tiles.
 
+    // Cesium's bundled Natural Earth II basemap is keyless and requires no
+    // commercial imagery account. Its low-resolution geography is sufficient
+    // for global context while signal points remain the primary visual layer.
+    try {
+      const naturalEarth = await C.TileMapServiceImageryProvider.fromUrl(
+        C.buildModuleUrl('Assets/Textures/NaturalEarthII')
+      );
+      politicalLayerRef.current = viewer.imageryLayers.addImageryProvider(naturalEarth);
+      politicalLayerRef.current.alpha = 0.65;
+      politicalLayerRef.current.brightness = 0.55;
+    } catch (error) {
+      console.warn('[atlas] Natural Earth basemap unavailable; keeping keyless ellipsoid', error);
+    }
+
     // Dark blue-grey globe — forensic aesthetic, visible landmass silhouette
     viewer.scene.globe.baseColor = C.Color.fromCssColorString('#0d1f2d');
     viewer.scene.backgroundColor = C.Color.fromCssColorString('#010206');
@@ -234,7 +248,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
     viewer.scene.globe.atmosphereLightIntensity = isMobile ? 2.0 : 3.5;
     viewer.scene.skyAtmosphere.show = !isMobile;
     viewer.scene.fog.enabled = false;
-    viewer.scene.globe.depthTestAgainstTerrain = true;
+    viewer.scene.globe.depthTestAgainstTerrain = false;
     viewer.scene.logarithmicDepthBuffer = true;
     // Match device physical pixel density — critical for crisp mobile rendering
     viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 1.5);
@@ -490,7 +504,7 @@ export default function CesiumGlobe({ signals, activeSignalId, showSatellite, ov
             // BOTTOM: all circle pixels above anchor → pass depth test; ellipsoid culls back-side
             verticalOrigin: C.VerticalOrigin.BOTTOM,
             horizontalOrigin: C.HorizontalOrigin.CENTER,
-            disableDepthTestDistance: 0,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scaleByDistance: new C.NearFarScalar(8e5, 0.85, 1.9e7, 0.48),
             translucencyByDistance: new C.NearFarScalar(6e5, 1, 2.0e7, 0.9),
           },
