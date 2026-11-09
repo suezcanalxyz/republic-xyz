@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: 'Suez Canal Republic',
     type: 'website',
+    images: [{ url: '/og/republic-atlas.jpg', width: 1200, height: 630, alt: 'Suez Canal Republic — ATLAS Core Research Graph' }],
   },
 };
 
